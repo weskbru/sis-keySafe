@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, GraduationCap, UserCog, Users, CheckCircle2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, GraduationCap, UserCog, CheckCircle2, Upload, Camera, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { PersonData } from '../data/mock';
 
@@ -10,7 +10,7 @@ interface RegisterPersonModalProps {
   initialData?: PersonData | null;
 }
 
-type Role = 'Servidor' | 'Prestador' | 'Visitante';
+type Role = 'Servidor' | 'Prestador';
 
 export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }: RegisterPersonModalProps) {
   if (!isOpen) return null;
@@ -21,6 +21,39 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
   const [phone, setPhone] = useState(initialData?.contact || '');
   const [area, setArea] = useState(initialData?.area || '');
   const [observations, setObservations] = useState(initialData?.observations || '');
+  const [avatarPreview, setAvatarPreview] = useState<string>(initialData?.avatar || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor, selecione apenas arquivos de imagem.');
+        return;
+      }
+      
+      // Validar tamanho (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('A imagem deve ter no máximo 5MB.');
+        return;
+      }
+
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setAvatarPreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = () => {
     onConfirm({
@@ -30,7 +63,8 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
       document,
       phone,
       area: role === 'Servidor' ? area : undefined,
-      observations
+      observations,
+      avatar: avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
     });
     onClose();
   };
@@ -52,6 +86,55 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
         </div>
 
         <div className="p-8 space-y-6">
+          {/* Avatar Upload */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Foto de Perfil</label>
+            <div className="flex items-center gap-6">
+              {/* Avatar Preview */}
+              <div className="relative">
+                {avatarPreview ? (
+                  <div className="relative group">
+                    <img 
+                      src={avatarPreview} 
+                      alt="Preview"
+                      className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                    />
+                    <button
+                      onClick={handleRemoveAvatar}
+                      className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={24} className="text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-gray-200 flex items-center justify-center">
+                    <User size={40} className="text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Button */}
+              <div className="flex-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="avatar-upload"
+                />
+                <label
+                  htmlFor="avatar-upload"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg cursor-pointer transition-colors border border-blue-200 font-medium"
+                >
+                  <Camera size={18} />
+                  {avatarPreview ? 'Alterar Foto' : 'Selecionar Foto'}
+                </label>
+                <p className="text-xs text-gray-500 mt-2">JPG, PNG ou GIF (máximo 5MB)</p>
+              </div>
+            </div>
+          </div>
+
           {/* Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Nome Completo</label>
@@ -67,7 +150,7 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
           {/* Role Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Perfil</label>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <RoleOption 
                 selected={role === 'Servidor'} 
                 onClick={() => setRole('Servidor')}
@@ -79,12 +162,6 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
                 onClick={() => setRole('Prestador')}
                 icon={<UserCog size={24} />}
                 label="PRESTADOR"
-              />
-              <RoleOption 
-                selected={role === 'Visitante'} 
-                onClick={() => setRole('Visitante')}
-                icon={<Users size={24} />}
-                label="VISITANTE"
               />
             </div>
           </div>

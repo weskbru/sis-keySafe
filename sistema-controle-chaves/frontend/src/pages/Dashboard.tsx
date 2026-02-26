@@ -69,7 +69,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           status: 'borrowed',
           holder: {
             name: data.personName || 'Desconhecido',
-            role: data.userType === 'resident' ? 'Morador' : 'Visitante',
+            role: data.userType,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
             time: 'Agora'
           },
@@ -308,20 +308,14 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 <div className="bg-white/20 p-1 rounded">
                   <ArrowRight size={16} />
                 </div>
-                Devolver Chave
+                Registar Devolução
               </button>
             )}
             
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
-                <Edit2 size={16} />
-                Editar
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
-                <Plus size={16} />
-                Nova Chave
-              </button>
-            </div>
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
+              <Edit2 size={16} />
+              Editar
+            </button>
           </div>
         </aside>
       )}

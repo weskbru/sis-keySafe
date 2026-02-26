@@ -69,10 +69,10 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
                   <input 
                     type="checkbox" 
                     className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
-                    checked={allowedProfiles.includes('Morador')}
-                    onChange={() => toggleProfile('Morador')}
+                    checked={allowedProfiles.includes('Servidor')}
+                    onChange={() => toggleProfile('Servidor')}
                   />
-                  <span className="text-sm font-medium text-gray-700">Morador</span>
+                  <span className="text-sm font-medium text-gray-700">Servidor</span>
                 </label>
                 <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 flex-1">
                   <input 
