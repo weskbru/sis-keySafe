@@ -6,8 +6,6 @@ class Pessoa(models.Model):
     TIPO_VINCULO_CHOICES = [
         ('SERVIDOR', 'Servidor'),
         ('TERCEIRIZADO', 'Terceirizado'),
-        ('ESTAGIARIO', 'Estagiário'),
-        ('VISITANTE', 'Visitante'),
     ]
 
     nome_completo = models.CharField(max_length=150)
