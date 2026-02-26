@@ -1,0 +1,20 @@
+# Ambientes e Segredos
+.env
+.env.*
+!.env.example
+
+# Frontend (Node/React)
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.npm/
+
+# Backend (Python)
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+
+# Banco de Dados e SO
+database/data/
+.DS_Store

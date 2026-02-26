@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  database:
+    # Nota: Substituir pela imagem oficial do banco relacional escolhido
+    image: ${DB_IMAGE_VERSION} 
+    container_name: sischave_db
+    restart: unless-stopped
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "${DB_PORT_LOCAL}:${DB_PORT_CONTAINER}"
+    volumes:
+      - db_data:/var/lib/db_data_internal # Persistência do inventário e relatórios
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # DDL de inicialização
+    networks:
+      - sischave_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sischave_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app # Mapeamento para auto-reload em desenvolvimento
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      - DB_HOST=database
+      - DB_PORT=${DB_PORT_CONTAINER}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - database
+    networks:
+      - sischave_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sischave_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Isola as dependências instaladas dentro do container
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+    environment:
+      - API_BASE_URL=http://localhost:${API_PORT}
+    depends_on:
+      - backend
+    networks:
+      - sischave_network
+
+networks:
+  sischave_network:
+    driver: bridge
+
+volumes:
+  db_data:
