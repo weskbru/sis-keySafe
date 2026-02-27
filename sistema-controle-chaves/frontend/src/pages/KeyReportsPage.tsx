@@ -1,24 +1,151 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Printer, 
   FileText, 
   FileSpreadsheet, 
   Filter, 
   Key, 
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { MOCK_KEY_REPORTS, KeyReportItem } from '../data/mockReports';
+import { MOCK_KEYS, MOCK_PEOPLE, KeyData } from '../data/mock';
 
 interface KeyReportsPageProps {
   onNavigate: (page: any) => void;
   onLogout: () => void;
 }
 
+type ReportRole = 'Servidor' | 'Prestador';
+
+interface KeyReportItem {
+  id: string;
+  name: string;
+  role: ReportRole;
+  contact: string;
+  area?: string;
+  keyName: string;
+  status: 'Devolvida' | 'Emprestada' | 'Vencida';
+  withdrawalDate: string;
+  returnDate: string;
+}
+
 export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
+  const [nameFilter, setNameFilter] = useState('');
+  const [keyFilter, setKeyFilter] = useState('all');
+  const [maxResults, setMaxResults] = useState(10000);
+  const [periodFrom, setPeriodFrom] = useState('');
+  const [periodTo, setPeriodTo] = useState('');
+  const [statusFilters, setStatusFilters] = useState({
+    finalizados: true,
+    andamento: true,
+    vencidos: false
+  });
+  const [roleFilters, setRoleFilters] = useState({
+    servidor: true,
+    prestador: true
+  });
+
+  const reportRows = useMemo<KeyReportItem[]>(() => {
+    return MOCK_KEYS.flatMap((key: KeyData) => {
+      const user = key.holder || key.lastUser;
+      if (!user) return [];
+
+      const person = MOCK_PEOPLE.find(p => p.name === user.name);
+      const rawRole = (user.role || person?.role || 'Servidor');
+      if (rawRole === 'Visitante') return [];
+      const role = rawRole as ReportRole;
+      const contact = person?.contact || (('contact' in user ? (user as { contact?: string }).contact : undefined) ?? '—');
+      const area = person?.area || (('area' in user ? (user as { area?: string }).area : undefined) ?? undefined);
+
+      const statusLabel: KeyReportItem['status'] =
+        key.status === 'available' ? 'Devolvida' :
+        key.status === 'borrowed' ? 'Emprestada' :
+        'Vencida';
+
+      return [{
+        id: key.id,
+        name: user.name,
+        role,
+        contact,
+        area,
+        keyName: key.name,
+        status: statusLabel,
+        withdrawalDate: key.borrowedAt || '—',
+        returnDate: key.lastUser?.returnedAt || '—'
+      }];
+    });
+  }, []);
+
+  const parseDateTimePtBr = (value: string): Date | null => {
+    if (!value || value === '—') return null;
+    const [datePart, timePart] = value.split(' ');
+    if (!datePart || !timePart) return null;
+    const [day, month, year] = datePart.split('/').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    if (!day || !month || !year) return null;
+    return new Date(year, month - 1, day, hour || 0, minute || 0);
+  };
+
+  const filteredRows = useMemo(() => {
+    const fromDate = periodFrom ? new Date(periodFrom) : null;
+    const toDate = periodTo ? new Date(periodTo) : null;
+
+    const matchesStatus = (status: KeyReportItem['status']) => {
+      if (status === 'Devolvida') return statusFilters.finalizados;
+      if (status === 'Emprestada') return statusFilters.andamento;
+      if (status === 'Vencida') return statusFilters.vencidos;
+      return true;
+    };
+
+    const matchesRole = (role: KeyReportItem['role']) => {
+      if (role === 'Servidor') return roleFilters.servidor;
+      if (role === 'Prestador') return roleFilters.prestador;
+      return true;
+    };
+
+    const normalizedName = nameFilter.trim().toLowerCase();
+
+    const rows = reportRows.filter((item) => {
+      if (normalizedName && !item.name.toLowerCase().includes(normalizedName)) {
+        return false;
+      }
+
+      if (keyFilter !== 'all' && item.keyName !== keyFilter) {
+        return false;
+      }
+
+      if (!matchesStatus(item.status)) {
+        return false;
+      }
+
+      if (!matchesRole(item.role)) {
+        return false;
+      }
+
+      if (fromDate || toDate) {
+        const withdrawDate = parseDateTimePtBr(item.withdrawalDate);
+        if (!withdrawDate) return false;
+        if (fromDate && withdrawDate < fromDate) return false;
+        if (toDate && withdrawDate > toDate) return false;
+      }
+
+      return true;
+    });
+
+    return rows.slice(0, Math.max(0, maxResults));
+  }, [
+    reportRows,
+    nameFilter,
+    keyFilter,
+    maxResults,
+    periodFrom,
+    periodTo,
+    statusFilters,
+    roleFilters
+  ]);
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
       {/* Header */}
@@ -69,19 +196,29 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                 type="text" 
                 placeholder="Digite o nome..." 
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">Chave</label>
-              <select className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white">
-                <option>Todas as chaves</option>
+              <select 
+                className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white"
+                value={keyFilter}
+                onChange={(e) => setKeyFilter(e.target.value)}
+              >
+                <option value="all">Todas as chaves</option>
+                {MOCK_KEYS.map((keyItem) => (
+                  <option key={keyItem.id} value={keyItem.name}>{keyItem.name}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700">Máxima quantidade</label>
               <input 
                 type="number" 
-                defaultValue="10000"
+                value={maxResults}
+                onChange={(e) => setMaxResults(Number(e.target.value) || 0)}
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
               />
             </div>
@@ -90,6 +227,8 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               <input 
                 type="datetime-local" 
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-500"
+                value={periodFrom}
+                onChange={(e) => setPeriodFrom(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -97,6 +236,8 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               <input 
                 type="datetime-local" 
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-500"
+                value={periodTo}
+                onChange={(e) => setPeriodTo(e.target.value)}
               />
             </div>
             
@@ -105,15 +246,30 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Empréstimos</label>
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                  <input 
+                    type="checkbox" 
+                    checked={statusFilters.finalizados}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, finalizados: e.target.checked }))}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+                  />
                   Finalizados
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                  <input 
+                    type="checkbox" 
+                    checked={statusFilters.andamento}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, andamento: e.target.checked }))}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+                  />
                   Em andamento
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
+                  <input 
+                    type="checkbox" 
+                    checked={statusFilters.vencidos}
+                    onChange={(e) => setStatusFilters(prev => ({ ...prev, vencidos: e.target.checked }))}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+                  />
                   Vencidos
                 </label>
               </div>
@@ -126,12 +282,22 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Quem Pegou</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    Morador
+                    <input 
+                      type="checkbox" 
+                      checked={roleFilters.servidor}
+                      onChange={(e) => setRoleFilters(prev => ({ ...prev, servidor: e.target.checked }))}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+                    />
+                    Servidor
                   </label>
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                    <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" />
-                    Visitante/Prestador
+                    <input 
+                      type="checkbox" 
+                      checked={roleFilters.prestador}
+                      onChange={(e) => setRoleFilters(prev => ({ ...prev, prestador: e.target.checked }))}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+                    />
+                    Prestador
                   </label>
                 </div>
               </div>
@@ -155,9 +321,20 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               </div>
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-md shadow-blue-200 active:scale-95 w-full md:w-auto justify-center">
+            <button 
+              onClick={() => {
+                setNameFilter('');
+                setKeyFilter('all');
+                setMaxResults(10000);
+                setPeriodFrom('');
+                setPeriodTo('');
+                setStatusFilters({ finalizados: true, andamento: true, vencidos: false });
+                setRoleFilters({ servidor: true, prestador: true });
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 transition-colors shadow-md shadow-blue-200 active:scale-95 w-full md:w-auto justify-center"
+            >
               <Filter size={18} />
-              Filtrar Resultados
+              Limpar Filtros
             </button>
           </div>
         </div>
@@ -169,25 +346,31 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
                   <th className="px-6 py-4">Nome</th>
-                  <th className="px-6 py-4">Tipo</th>
+                  <th className="px-6 py-4">Perfil</th>
+                  <th className="px-6 py-4">Contato</th>
+                  <th className="px-6 py-4">Area</th>
                   <th className="px-6 py-4">Chave</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Retirada</th>
-                  <th className="px-6 py-4">Entrega/Validade</th>
-                  <th className="px-6 py-4 text-center">Ações</th>
+                  <th className="px-6 py-4">Entrega</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {MOCK_KEY_REPORTS.map((item) => (
+                {filteredRows.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900">{item.name}</span>
-                        <span className="text-xs text-gray-500">{item.detail}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <TypeBadge type={item.type} />
+                      <TypeBadge role={item.role} />
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {item.contact}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {item.area || '—'}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-gray-700 font-medium">
@@ -206,11 +389,6 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                       item.status === 'Vencida' ? "text-red-600 font-bold" : "text-gray-600"
                     )}>
                       {item.returnDate}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors">
-                        <MoreVertical size={18} />
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -247,16 +425,15 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
   );
 }
 
-function TypeBadge({ type }: { type: KeyReportItem['type'] }) {
+function TypeBadge({ role }: { role: KeyReportItem['role'] }) {
   const styles = {
-    'MORADOR': 'bg-gray-100 text-gray-600',
-    'PRESTADOR': 'bg-blue-50 text-blue-600',
-    'VISITANTE': 'bg-gray-100 text-gray-600',
+    'Servidor': 'bg-gray-100 text-gray-600',
+    'Prestador': 'bg-blue-50 text-blue-600',
   };
 
   return (
-    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", styles[type])}>
-      {type}
+    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", styles[role])}>
+      {role}
     </span>
   );
 }

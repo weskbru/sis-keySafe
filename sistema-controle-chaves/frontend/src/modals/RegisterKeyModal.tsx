@@ -11,6 +11,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
   if (!isOpen) return null;
 
   const [keyName, setKeyName] = useState('');
+  const [location, setLocation] = useState('Bloco A');
   const [allowedProfiles, setAllowedProfiles] = useState<string[]>([]);
   const [description, setDescription] = useState('');
 
@@ -23,8 +24,13 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
   };
 
   const handleSubmit = () => {
+    if (!keyName.trim() || !location.trim() || allowedProfiles.length === 0 || !description.trim()) {
+      alert('Preencha todos os campos obrigatorios.');
+      return;
+    }
     onConfirm({
       name: keyName,
+      location,
       allowedProfiles,
       description
     });
@@ -58,7 +64,22 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400 text-sm"
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
+              required
             />
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Localização</label>
+            <select
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white cursor-pointer"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+            >
+              <option value="Bloco A">Bloco A</option>
+              <option value="Bloco B">Bloco B</option>
+            </select>
           </div>
 
           {/* Allowed Profiles */}
@@ -69,10 +90,11 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
                   <input 
                     type="checkbox" 
                     className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
-                    checked={allowedProfiles.includes('Morador')}
-                    onChange={() => toggleProfile('Morador')}
+                    checked={allowedProfiles.includes('Servidor')}
+                    onChange={() => toggleProfile('Servidor')}
+                    required={allowedProfiles.length === 0}
                   />
-                  <span className="text-sm font-medium text-gray-700">Morador</span>
+                  <span className="text-sm font-medium text-gray-700">Servidor</span>
                 </label>
                 <label className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 flex-1">
                   <input 
@@ -80,6 +102,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
                     className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
                     checked={allowedProfiles.includes('Prestador')}
                     onChange={() => toggleProfile('Prestador')}
+                    required={allowedProfiles.length === 0}
                   />
                   <span className="text-sm font-medium text-gray-700">Prestador de Serviço</span>
                 </label>
@@ -94,6 +117,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
               placeholder="Insira detalhes sobre a chave, localização ou restrições de uso..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              required
             />
           </div>
         </div>

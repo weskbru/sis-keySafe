@@ -19,6 +19,8 @@ import { Sidebar } from '../modals/Sidebar';
 import { ReturnKeyModal } from '../modals/ReturnKeyModal';
 import { AssignKeyModal } from '../modals/AssignKeyModal';
 import { RegisterKeyModal } from '../modals/RegisterKeyModal';
+import { EditKeyModal } from '../modals/EditKeyModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -28,20 +30,68 @@ interface DashboardProps {
 export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>('08');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterProfile, setFilterProfile] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRegisterKeyModalOpen, setIsRegisterKeyModalOpen] = useState(false);
+  const [isEditKeyModalOpen, setIsEditKeyModalOpen] = useState(false);
+  const [isBellOpen, setIsBellOpen] = useState(false);
   const [keys, setKeys] = useState<KeyData[]>(MOCK_KEYS);
+  
+  // Confirmation modals state
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    type: 'save-key' | 'delete-key' | 'edit-key' | 'assign-key' | 'return-key' | null;
+    data?: any;
+  }>({ isOpen: false, type: null });
 
   const selectedKey = keys.find(k => k.id === selectedKeyId);
 
-  const filteredKeys = keys.filter(key => 
-    key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    key.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const availableCount = keys.filter(key => key.status === 'available').length;
+  const borrowedCount = keys.filter(key => key.status === 'borrowed').length;
+  const overdueCount = keys.filter(key => key.status === 'overdue').length;
+
+  const filteredKeys = keys.filter(key => {
+    // Search filter
+    const matchesSearch = 
+      key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      key.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Profile filter
+    const matchesProfile = 
+      filterProfile === 'all' || 
+      (filterProfile === 'Servidor' && key.holder?.role === 'Servidor') ||
+      (filterProfile === 'Prestador' && key.holder?.role === 'Prestador') ||
+      (filterProfile === 'Visitante' && key.holder?.role === 'Visitante') ||
+      (filterProfile === 'available' && !key.holder);
+    
+    // Status filter
+    const matchesStatus = 
+      filterStatus === 'all' || 
+      key.status === filterStatus;
+    
+    return matchesSearch && matchesProfile && matchesStatus;
+  });
 
   const handleReturnConfirm = (observations: string) => {
-    if (!selectedKey) return;
+    setConfirmationModal({
+      isOpen: true,
+      type: 'return-key',
+      data: { observations }
+    });
+  };
+
+  const executeReturnKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
+    const now = new Date();
+    const returnedDateTime = now.toLocaleString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -49,9 +99,18 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           ...key,
           status: 'available',
           holder: undefined,
+          lastUser: key.holder ? {
+            name: key.holder.name,
+            role: key.holder.role,
+            avatar: key.holder.avatar,
+            contact: selectedKey.holder?.contact,
+            area: selectedKey.holder?.area,
+            returnedAt: returnedDateTime
+          } : undefined,
+          returnedAt: returnedDateTime,
           borrowedAt: undefined,
-          lastUsed: 'Hoje',
-          observations: observations || undefined
+          lastUsed: returnedDateTime,
+          observations: confirmationModal.data.observations || undefined
         };
       }
       return key;
@@ -60,7 +119,23 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleAssignConfirm = (data: any) => {
-    if (!selectedKey) return;
+    setConfirmationModal({
+      isOpen: true,
+      type: 'assign-key',
+      data
+    });
+  };
+
+  const executeAssignKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
+    const data = confirmationModal.data;
+    
+    // Use custom withdrawal time from modal (automatic)
+    const withdrawalDateTime = data.customWithdrawalTime;
+    
+    // Extract time from datetime (format: DD/MM/YYYY HH:MM)
+    const timePart = withdrawalDateTime.split(' ')[1];
+    const timeAgo = timePart || '00:00';
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -69,11 +144,15 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           status: 'borrowed',
           holder: {
             name: data.personName || 'Desconhecido',
-            role: data.userType === 'resident' ? 'Morador' : 'Visitante',
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
-            time: 'Agora'
+            role: data.userType,
+            avatar: data.personAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
+            time: timeAgo,
+            contact: data.personContact,
+            area: data.personArea,
+            document: data.personDocument
           },
-          borrowedAt: new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+          borrowedAt: withdrawalDateTime,
+          withdrawalTime: withdrawalDateTime,
           observations: data.observations
         };
       }
@@ -83,19 +162,138 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleRegisterKeyConfirm = (data: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'save-key',
+      data
+    });
+  };
+
+  const executeSaveKey = () => {
+    if (!confirmationModal.data) return;
+    const data = confirmationModal.data;
+
     const newKey: KeyData = {
       id: Math.random().toString(36).substr(2, 9),
       name: data.name,
-      location: 'Nova Localização', // You might want to add this field to the modal or derive it
-      category: 'Geral', // Default category
+      location: data.location || 'Bloco A',
+      category: 'Geral',
       status: 'available',
       description: data.description,
       allowedProfiles: data.allowedProfiles,
       lastUsed: 'Nunca'
     };
     
-    setKeys([newKey, ...keys]);
+    setKeys(prevKeys => [newKey, ...prevKeys]);
     setIsRegisterKeyModalOpen(false);
+  };
+
+  const handleEditKeyConfirm = (data: { name: string; allowedProfiles: string[]; description?: string }) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'edit-key',
+      data
+    });
+  };
+
+  const executeEditKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
+    const data = confirmationModal.data;
+
+    setKeys(prevKeys => prevKeys.map(key => {
+      if (key.id === selectedKey.id) {
+        return {
+          ...key,
+          name: data.name,
+          allowedProfiles: data.allowedProfiles,
+          description: data.description
+        };
+      }
+      return key;
+    }));
+    setIsEditKeyModalOpen(false);
+  };
+
+  const handleDeleteKey = () => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'delete-key'
+    });
+  };
+
+  const executeDeleteKey = () => {
+    if (!selectedKey) return;
+
+    setKeys(prevKeys => prevKeys.filter(key => key.id !== selectedKey.id));
+    setSelectedKeyId(null);
+    setIsEditKeyModalOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    switch (confirmationModal.type) {
+      case 'save-key':
+        executeSaveKey();
+        break;
+      case 'delete-key':
+        executeDeleteKey();
+        break;
+      case 'edit-key':
+        executeEditKey();
+        break;
+      case 'assign-key':
+        executeAssignKey();
+        break;
+      case 'return-key':
+        executeReturnKey();
+        break;
+    }
+  };
+
+  const getConfirmationConfig = () => {
+    switch (confirmationModal.type) {
+      case 'save-key':
+        return {
+          title: 'Confirmar Cadastro',
+          message: 'Deseja realmente cadastrar esta chave?',
+          confirmText: 'Sim, Cadastrar',
+          type: 'success' as const
+        };
+      case 'delete-key':
+        return {
+          title: 'Confirmar Exclusão',
+          message: 'Tem certeza que deseja excluir esta chave? Esta ação não pode ser desfeita.',
+          confirmText: 'Sim, Excluir',
+          type: 'danger' as const
+        };
+      case 'edit-key':
+        return {
+          title: 'Confirmar Alterações',
+          message: 'Deseja realmente salvar as alterações desta chave?',
+          confirmText: 'Sim, Salvar',
+          type: 'success' as const
+        };
+      case 'assign-key':
+        return {
+          title: 'Confirmar Concessão',
+          message: 'Deseja realmente conceder esta chave?',
+          confirmText: 'Sim, Conceder',
+          type: 'warning' as const
+        };
+      case 'return-key':
+        return {
+          title: 'Confirmar Devolução',
+          message: 'Deseja realmente registrar a devolução desta chave?',
+          confirmText: 'Sim, Registrar',
+          type: 'success' as const
+        };
+      default:
+        return {
+          title: 'Confirmar',
+          message: 'Deseja continuar?',
+          confirmText: 'Confirmar',
+          type: 'warning' as const
+        };
+    }
   };
 
   return (
@@ -123,10 +321,36 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               <Plus size={18} />
               Cadastrar Nova Chave
             </button>
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsBellOpen(prev => !prev)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative"
+              >
+                <Bell size={20} />
+                {overdueCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+              {isBellOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-40">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Resumo</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Disponiveis</span>
+                      <span className="font-bold text-emerald-600">{availableCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Emprestadas</span>
+                      <span className="font-bold text-amber-600">{borrowedCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Atrasadas</span>
+                      <span className="font-bold text-red-600">{overdueCount}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
               <HelpCircle size={20} />
             </button>
@@ -148,15 +372,37 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               />
             </div>
             <div className="flex gap-3">
-              <select className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
-                <option>Todos os Perfis</option>
+              <select 
+                value={filterProfile} 
+                onChange={(e) => setFilterProfile(e.target.value)}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+              >
+                <option value="all">Todos os Perfis</option>
+                <option value="available">Sem Portador</option>
+                <option value="Servidor">Servidor</option>
+                <option value="Prestador">Prestador</option>
+                <option value="Visitante">Visitante</option>
               </select>
-              <select className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
-                <option>Todos os Status</option>
+              <select 
+                value={filterStatus} 
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+              >
+                <option value="all">Todos os Status</option>
+                <option value="available">Disponível</option>
+                <option value="borrowed">Emprestada</option>
+                <option value="overdue">Atrasada</option>
               </select>
-              <button className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center gap-2 font-medium transition-colors">
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterProfile('all');
+                  setFilterStatus('all');
+                }}
+                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center gap-2 font-medium transition-colors"
+              >
                 <Filter size={18} />
-                Filtrar
+                Limpar
               </button>
             </div>
           </div>
@@ -244,7 +490,42 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                     )}
                   </div>
                   <h5 className="font-bold text-gray-900">{selectedKey.holder.name}</h5>
-                  <p className="text-xs text-gray-500 mt-1">Morador - Bloco B, Apto 402</p>
+                  <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.role}</p>
+                  {selectedKey.holder.contact && (
+                    <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.contact}</p>
+                  )}
+                  {selectedKey.holder.area && (
+                    <p className="text-xs text-blue-600 font-medium mt-1">{selectedKey.holder.area}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Last User Info - Appears when key is available */}
+            {selectedKey.status === 'available' && selectedKey.lastUser && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-gray-900">Último Uso</h4>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 flex flex-col items-center text-center">
+                  <div className="mb-3">
+                    <img 
+                      src={selectedKey.lastUser.avatar} 
+                      alt={selectedKey.lastUser.name}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm"
+                    />
+                  </div>
+                  <h5 className="font-bold text-gray-900">{selectedKey.lastUser.name}</h5>
+                  <p className="text-xs text-gray-600 mt-1">{selectedKey.lastUser.role}</p>
+                  {selectedKey.lastUser.contact && (
+                    <p className="text-xs text-gray-600 mt-1">{selectedKey.lastUser.contact}</p>
+                  )}
+                  {selectedKey.lastUser.area && (
+                    <p className="text-xs text-blue-700 font-medium mt-1">{selectedKey.lastUser.area}</p>
+                  )}
+                  {selectedKey.lastUser.returnedAt && (
+                    <p className="text-xs text-gray-500 mt-2 bg-white/50 px-2 py-1 rounded">
+                      Devolvida em: {selectedKey.lastUser.returnedAt}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -308,20 +589,17 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 <div className="bg-white/20 p-1 rounded">
                   <ArrowRight size={16} />
                 </div>
-                Devolver Chave
+                Registar Devolução
               </button>
             )}
             
-            <div className="grid grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
-                <Edit2 size={16} />
-                Editar
-              </button>
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
-                <Plus size={16} />
-                Nova Chave
-              </button>
-            </div>
+            <button 
+              onClick={() => setIsEditKeyModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
+            >
+              <Edit2 size={16} />
+              Editar
+            </button>
           </div>
         </aside>
       )}
@@ -347,6 +625,24 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         isOpen={isRegisterKeyModalOpen}
         onClose={() => setIsRegisterKeyModalOpen(false)}
         onConfirm={handleRegisterKeyConfirm}
+      />
+
+      {selectedKey && (
+        <EditKeyModal 
+          isOpen={isEditKeyModalOpen}
+          onClose={() => setIsEditKeyModalOpen(false)}
+          onConfirm={handleEditKeyConfirm}
+          onDelete={handleDeleteKey}
+          keyData={selectedKey}
+        />
+      )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, type: null })}
+        onConfirm={handleConfirmAction}
+        {...getConfirmationConfig()}
       />
     </div>
   );
@@ -393,8 +689,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
       <div className="flex justify-between items-start mb-1">
         <h3 className="font-bold text-gray-900 text-lg">{data.name} -</h3>
       </div>
-      <h3 className="font-bold text-gray-900 text-lg mb-1">{data.location}</h3>
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-4">{data.category}</p>
+      <h3 className="font-bold text-gray-900 text-lg mb-4">{data.location}</h3>
 
       {/* Footer Info */}
       <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
