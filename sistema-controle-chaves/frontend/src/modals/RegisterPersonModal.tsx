@@ -73,6 +73,31 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
     option.toLowerCase().includes(areaQuery.toLowerCase())
   ).slice(0, 2);
 
+  const formatCpf = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    const parts = digits.match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
+    if (!parts) return digits;
+    const [, p1, p2, p3, p4] = parts;
+    return [
+      p1,
+      p2 ? `.${p2}` : '',
+      p3 ? `.${p3}` : '',
+      p4 ? `-${p4}` : ''
+    ].join('');
+  };
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    const parts = digits.match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+    if (!parts) return digits;
+    const [, p1, p2, p3] = parts;
+    return [
+      p1 ? `(${p1}) ` : '',
+      p2,
+      p3 ? `-${p3}` : ''
+    ].join('');
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -105,6 +130,10 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
   };
 
   const handleSubmit = () => {
+    if (!name.trim() || !document.trim() || !phone.trim() || (role && !area.trim())) {
+      alert('Preencha todos os campos obrigatorios.');
+      return;
+    }
     onConfirm({
       id: initialData?.id,
       name,
@@ -193,6 +222,7 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
             />
           </div>
 
@@ -231,6 +261,7 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
                     setShowAreaList(true);
                   }}
                   onFocus={() => setShowAreaList(true)}
+                  required
                 />
                 {showAreaList && areaQuery && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
@@ -267,7 +298,8 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
                 placeholder="000.000.000-00"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
                 value={document}
-                onChange={(e) => setDocument(e.target.value)}
+                onChange={(e) => setDocument(formatCpf(e.target.value))}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -277,7 +309,8 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
                 placeholder="(00) 00000-0000"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(formatPhone(e.target.value))}
+                required
               />
             </div>
           </div>
