@@ -14,6 +14,12 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data # Caminho oficial de persistência do Postgres
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - sischave_network
 
@@ -38,8 +44,10 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET_KEY=${SECRET_KEY}
+      - DJANGO_DEBUG=${DEBUG}
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - sischave_network
 
