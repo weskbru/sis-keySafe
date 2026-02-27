@@ -36,6 +36,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRegisterKeyModalOpen, setIsRegisterKeyModalOpen] = useState(false);
   const [isEditKeyModalOpen, setIsEditKeyModalOpen] = useState(false);
+  const [isBellOpen, setIsBellOpen] = useState(false);
   const [keys, setKeys] = useState<KeyData[]>(MOCK_KEYS);
   
   // Confirmation modals state
@@ -46,6 +47,10 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   }>({ isOpen: false, type: null });
 
   const selectedKey = keys.find(k => k.id === selectedKeyId);
+
+  const availableCount = keys.filter(key => key.status === 'available').length;
+  const borrowedCount = keys.filter(key => key.status === 'borrowed').length;
+  const overdueCount = keys.filter(key => key.status === 'overdue').length;
 
   const filteredKeys = keys.filter(key => {
     // Search filter
@@ -316,10 +321,36 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               <Plus size={18} />
               Cadastrar Nova Chave
             </button>
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsBellOpen(prev => !prev)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative"
+              >
+                <Bell size={20} />
+                {overdueCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+              {isBellOpen && (
+                <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-3 z-40">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Resumo</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Disponiveis</span>
+                      <span className="font-bold text-emerald-600">{availableCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Emprestadas</span>
+                      <span className="font-bold text-amber-600">{borrowedCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600">Atrasadas</span>
+                      <span className="font-bold text-red-600">{overdueCount}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
               <HelpCircle size={20} />
             </button>
