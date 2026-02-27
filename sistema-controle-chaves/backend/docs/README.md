@@ -15,6 +15,8 @@ API RESTful desenvolvida em **Django 6 + Django REST Framework** para gerenciar 
 | [setup.md](./setup.md) | Como executar localmente |
 | [tests.md](./tests.md) | Documentação completa da suite de testes |
 | [database.md](./database.md) | Guia do banco de dados e como estender o schema |
+| [user-management.md](./user-management.md) | Criar, desativar e gerenciar usuários operadores |
+| [pessoas-management.md](./pessoas-management.md) | Cadastrar servidores e prestadores que retiram chaves |
 
 ---
 

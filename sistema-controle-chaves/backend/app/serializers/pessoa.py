@@ -1,16 +1,23 @@
+import re
+
 from rest_framework import serializers
+
 from app.models import Pessoa
+
+_CPF_RE = re.compile(r'^\d{3}\.\d{3}\.\d{3}-\d{2}$')
 
 
 class PessoaSerializer(serializers.ModelSerializer):
     setor_nome = serializers.CharField(source='setor.nome', read_only=True)
     cpf_display = serializers.SerializerMethodField()
+    foto = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Pessoa
         fields = [
             'id', 'nome_completo', 'cpf', 'cpf_display', 'tipo_vinculo',
-            'setor', 'setor_nome', 'ativo', 'criado_em', 'atualizado_em',
+            'setor', 'setor_nome', 'foto', 'telefone', 'observacao',
+            'ativo', 'criado_em', 'atualizado_em',
         ]
         read_only_fields = ['criado_em', 'atualizado_em']
 
@@ -27,6 +34,20 @@ class PessoaSerializer(serializers.ModelSerializer):
             return cpf
         # Mantém apenas os 5 últimos caracteres visíveis: "89-00"
         return f'***.***.**{cpf[-5:]}'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if instance.foto and request:
+            data['foto'] = request.build_absolute_uri(instance.foto.url)
+        return data
+
+    def validate_cpf(self, value: str) -> str:
+        if not _CPF_RE.match(value):
+            raise serializers.ValidationError(
+                'CPF deve estar no formato 000.000.000-00.'
+            )
+        return value
 
     def validate(self, data):
         tipo_vinculo = data.get('tipo_vinculo') or getattr(self.instance, 'tipo_vinculo', None)

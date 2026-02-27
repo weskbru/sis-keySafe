@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { Dashboard } from './pages/Dashboard';
 import { ReportsPage } from './pages/ReportsPage';
@@ -12,45 +13,33 @@ import { KeyReportsPage } from './pages/KeyReportsPage';
 
 type Page = 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports';
 
-export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+function AppRoutes() {
+  const { isAuthenticated, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
 
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  if (!isAuthenticated) {
+    return <LoginPage />;
   }
 
   if (currentPage === 'key-reports') {
-    return (
-      <KeyReportsPage 
-        onNavigate={setCurrentPage} 
-        onLogout={() => setIsLoggedIn(false)} 
-      />
-    );
+    return <KeyReportsPage onNavigate={setCurrentPage} onLogout={logout} />;
   }
 
   if (currentPage === 'authorized-persons') {
-    return (
-      <AuthorizedPersonsPage 
-        onNavigate={setCurrentPage} 
-        onLogout={() => setIsLoggedIn(false)} 
-      />
-    );
+    return <AuthorizedPersonsPage onNavigate={setCurrentPage} onLogout={logout} />;
   }
 
   if (currentPage === 'reports') {
-    return (
-      <ReportsPage 
-        onNavigate={setCurrentPage} 
-        onLogout={() => setIsLoggedIn(false)} 
-      />
-    );
+    return <ReportsPage onNavigate={setCurrentPage} onLogout={logout} />;
   }
 
+  return <Dashboard onNavigate={setCurrentPage} onLogout={logout} />;
+}
+
+export default function App() {
   return (
-    <Dashboard 
-      onNavigate={setCurrentPage}
-      onLogout={() => setIsLoggedIn(false)} 
-    />
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }

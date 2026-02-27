@@ -8,6 +8,8 @@ export interface KeyData {
   status: KeyStatus;
   lastUsed?: string;
   holder?: {
+    area: any | string;
+    contact: any | string;
     name: string;
     role: string;
     avatar: string;
@@ -55,6 +57,8 @@ export const MOCK_KEYS: KeyData[] = [
       role: 'Servidor',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces',
       time: 'Há 2h',
+      area: undefined,
+      contact: undefined
     },
     description: 'Chave mestra para acesso ao Salão de Festas Principal e Cozinha Gourmet.',
     allowedProfiles: ['Servidor', 'Prestador'],
@@ -72,6 +76,8 @@ export const MOCK_KEYS: KeyData[] = [
       role: 'Servidor',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
       time: '45m',
+      area: undefined,
+      contact: undefined
     },
   },
   {
@@ -106,6 +112,8 @@ export const MOCK_KEYS: KeyData[] = [
       name: 'Carlos Lima',
       role: 'Prestador',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces',
+      area: undefined,
+      contact: undefined
     },
   },
   {
