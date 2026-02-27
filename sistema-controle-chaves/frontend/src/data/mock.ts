@@ -8,6 +8,8 @@ export interface KeyData {
   status: KeyStatus;
   lastUsed?: string;
   holder?: {
+    area: any | string;
+    contact: any | string;
     name: string;
     role: string;
     avatar: string;

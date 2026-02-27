@@ -30,8 +30,7 @@ services:
     container_name: sischave_backend
     restart: unless-stopped
     command: >
-      sh -c "python manage.py makemigrations &&
-             python manage.py migrate --fake-initial &&
+      sh -c "python manage.py migrate --fake-initial &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
@@ -44,7 +43,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET_KEY=${SECRET_KEY}
-      - DJANGO_DEBUG=${DEBUG}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - CORS_ALLOW_ALL=${CORS_ALLOW_ALL}
     depends_on:
       database:
         condition: service_healthy
