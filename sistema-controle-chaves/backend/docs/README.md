@@ -13,6 +13,7 @@ API RESTful desenvolvida em **Django 6 + Django REST Framework** para gerenciar 
 | [api.md](./api.md) | Referência completa dos endpoints |
 | [business-rules.md](./business-rules.md) | Regras de negócio |
 | [setup.md](./setup.md) | Como executar localmente |
+| [tests.md](./tests.md) | Documentação completa da suite de testes |
 
 ---
 
