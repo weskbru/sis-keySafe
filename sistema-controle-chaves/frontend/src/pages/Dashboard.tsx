@@ -20,7 +20,7 @@ import { ReturnKeyModal } from '../modals/ReturnKeyModal';
 import { AssignKeyModal } from '../modals/AssignKeyModal';
 import { RegisterKeyModal } from '../modals/RegisterKeyModal';
 import { EditKeyModal } from '../modals/EditKeyModal';
-import { ConfirmationModal } from '../components/ConfirmationModal';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 interface DashboardProps {
   onLogout: () => void;

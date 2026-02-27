@@ -13,7 +13,7 @@ import { Sidebar } from '../modals/Sidebar';
 import { MOCK_PEOPLE, PersonData } from '../data/mock';
 import { cn } from '../lib/utils';
 import { RegisterPersonModal } from '../modals/RegisterPersonModal';
-import { ConfirmationModal } from '../components/ConfirmationModal';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 interface AuthorizedPersonsPageProps {
   onNavigate: (page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports') => void;
