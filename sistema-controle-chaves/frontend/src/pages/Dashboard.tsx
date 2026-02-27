@@ -60,6 +60,14 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
   const executeReturnKey = () => {
     if (!selectedKey || !confirmationModal.data) return;
+    const now = new Date();
+    const returnedDateTime = now.toLocaleString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -67,8 +75,9 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           ...key,
           status: 'available',
           holder: undefined,
+          returnedAt: returnedDateTime,
           borrowedAt: undefined,
-          lastUsed: 'Hoje',
+          lastUsed: returnedDateTime,
           observations: confirmationModal.data.observations || undefined
         };
       }
@@ -88,6 +97,13 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const executeAssignKey = () => {
     if (!selectedKey || !confirmationModal.data) return;
     const data = confirmationModal.data;
+    
+    // Use custom withdrawal time from modal (automatic)
+    const withdrawalDateTime = data.customWithdrawalTime;
+    
+    // Extract time from datetime (format: DD/MM/YYYY HH:MM)
+    const timePart = withdrawalDateTime.split(' ')[1];
+    const timeAgo = timePart || '00:00';
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -98,12 +114,13 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
             name: data.personName || 'Desconhecido',
             role: data.userType,
             avatar: data.personAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
-            time: 'Agora',
+            time: timeAgo,
             contact: data.personContact,
             area: data.personArea,
             document: data.personDocument
           },
-          borrowedAt: new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+          borrowedAt: withdrawalDateTime,
+          withdrawalTime: withdrawalDateTime,
           observations: data.observations
         };
       }
