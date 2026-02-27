@@ -2,19 +2,24 @@ version: '3.8'
 
 services:
   database:
-    # Nota: Substituir pela imagem oficial do banco relacional escolhido
-    image: ${DB_IMAGE_VERSION} 
+    image: postgres:15-alpine # Imagem oficial e leve do PostgreSQL
     container_name: sischave_db
     restart: unless-stopped
     environment:
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - "${DB_PORT_LOCAL}:${DB_PORT_CONTAINER}"
     volumes:
-      - db_data:/var/lib/db_data_internal # Persistência do inventário e relatórios
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql # DDL de inicialização
+      - db_data:/var/lib/postgresql/data # Caminho oficial de persistência do Postgres
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - sischave_network
 
@@ -24,10 +29,14 @@ services:
       dockerfile: Dockerfile
     container_name: sischave_backend
     restart: unless-stopped
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate --fake-initial &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
-      - ./backend:/app # Mapeamento para auto-reload em desenvolvimento
+      - ./backend:/app
     ports:
-      - "${API_PORT}:${API_PORT}"
+      - "8080:8000"  # AQUI ESTÁ O SEGREDO: A porta 8080 externa aponta para a 8000 interna
     environment:
       - DB_HOST=database
       - DB_PORT=${DB_PORT_CONTAINER}
@@ -35,8 +44,10 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET_KEY=${SECRET_KEY}
+      - DJANGO_DEBUG=${DEBUG}
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     networks:
       - sischave_network
 
@@ -48,11 +59,11 @@ services:
     restart: unless-stopped
     volumes:
       - ./frontend:/app
-      - /app/node_modules # Isola as dependências instaladas dentro do container
+      - /app/node_modules
     ports:
-      - "${WEB_PORT}:${WEB_PORT}"
+      - "3000:3000"
     environment:
-      - API_BASE_URL=http://localhost:${API_PORT}
+      - VITE_API_URL=http://localhost:8080
     depends_on:
       - backend
     networks:
