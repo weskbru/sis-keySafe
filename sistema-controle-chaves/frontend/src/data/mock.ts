@@ -61,7 +61,7 @@ export const MOCK_KEYS: KeyData[] = [
     status: 'overdue',
     holder: {
       name: 'Ana Clara',
-      role: 'Visitante',
+      role: 'Servidor',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
       time: '45m',
     },
@@ -113,7 +113,7 @@ export interface PersonData {
   name: string;
   email?: string;
   avatar: string;
-  role: 'Servidor' | 'Prestador' | 'Visitante';
+  role: 'Servidor' | 'Prestador';
   document: string;
   contact: string;
   area?: string;
@@ -128,7 +128,7 @@ export const MOCK_PEOPLE: PersonData[] = [
     role: 'Servidor',
     document: '123.456.789-00',
     contact: '(11) 98765-4321',
-    area: 'Administracao',
+    area: 'ACI - Assessoria de Cooperacao Internacional',
   },
   {
     id: '2',
@@ -139,21 +139,13 @@ export const MOCK_PEOPLE: PersonData[] = [
     contact: '(11) 97654-3210',
   },
   {
-    id: '3',
-    name: 'Ricardo Ferreira',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=faces',
-    role: 'Visitante',
-    document: '345.678.901-22',
-    contact: '(11) 96543-2109',
-  },
-  {
     id: '4',
     name: 'Ana Beatriz Costa',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=faces',
     role: 'Servidor',
     document: '456.789.012-33',
     contact: '(11) 95432-1098',
-    area: 'Financeiro',
+    area: 'COF - Coordenacao de Orcamento e Financas',
   },
   {
     id: '5',
@@ -162,13 +154,5 @@ export const MOCK_PEOPLE: PersonData[] = [
     role: 'Prestador',
     document: '567.890.123-44',
     contact: '(11) 94321-0987',
-  },
-  {
-    id: '6',
-    name: 'Juliana Rocha',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=faces',
-    role: 'Visitante',
-    document: '678.901.234-55',
-    contact: '(11) 93210-9876',
   },
 ];
