@@ -29,7 +29,7 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
           onClick={() => onNavigate('dashboard')}
         />
         <NavItem 
-          icon={<Users size={20} />} 
+          icon={<Users size={15} />} 
           label="Pessoas Autorizadas" 
           active={activePage === 'authorized-persons'} 
           onClick={() => onNavigate('authorized-persons')}
