@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Key, Home, Users, Search, Calendar, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { X, Key, Home, Users, Search, Calendar, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { KeyData, MOCK_PEOPLE, PersonData } from '../data/mock';
 
@@ -19,9 +19,20 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<PersonData | null>(null);
   const [showPersonList, setShowPersonList] = useState(false);
-  const [withdrawalDate, setWithdrawalDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [observations, setObservations] = useState('');
+
+  // Get current datetime for automatic withdrawal
+  const now = useMemo(() => new Date(), []);
+  const withdrawalDateTime = useMemo(() => {
+    return now.toLocaleString('pt-BR', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  }, [now]);
 
   // Filtrar pessoas por search term e userType
   const filteredPeople = MOCK_PEOPLE.filter(person => {
@@ -41,6 +52,13 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
     setShowPersonList(false);
   };
 
+  const formatDateTimeLocal = (datetimeLocalValue: string): string => {
+    if (!datetimeLocalValue) return '';
+    const [date, time] = datetimeLocalValue.split('T');
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year} ${time}`;
+  };
+
   const handleSubmit = () => {
     onConfirm({
       keyId: keyData.id,
@@ -51,8 +69,8 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
       personArea: selectedPerson?.area,
       personDocument: selectedPerson?.document,
       personAvatar: selectedPerson?.avatar,
-      withdrawalDate,
-      returnDate,
+      customWithdrawalTime: withdrawalDateTime,
+      expectedReturnDate: returnDate ? formatDateTimeLocal(returnDate) : undefined,
       observations
     });
     onClose();
@@ -183,30 +201,34 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
             </div>
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Data/Hora de Retirada</label>
-              <div className="relative">
-                <input 
-                  type="datetime-local" 
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-600"
-                  value={withdrawalDate}
-                  onChange={(e) => setWithdrawalDate(e.target.value)}
-                />
+          {/* Withdrawal DateTime (Automatic) */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Data/Hora de Retirada</label>
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg border border-blue-200 flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Calendar size={18} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">{withdrawalDateTime}</p>
+                <p className="text-xs text-gray-600 mt-1">Registrada automaticamente</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Prevista de Devolução</label>
-              <div className="relative">
-                <input 
-                  type="datetime-local" 
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-600"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                />
-              </div>
+          </div>
+
+          {/* Expected Return DateTime (Optional) */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Data/Hora Prevista de Devolução</label>
+            <div className="relative">
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none z-10" />
+              <input 
+                type="datetime-local" 
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-600"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                placeholder="Selecione uma data opcional"
+              />
             </div>
+            <p className="text-xs text-gray-500">Opcional - Quando você prevê que a chave será devolvida</p>
           </div>
 
           {/* Observations */}

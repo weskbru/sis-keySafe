@@ -30,6 +30,8 @@ interface DashboardProps {
 export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>('08');
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterProfile, setFilterProfile] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRegisterKeyModalOpen, setIsRegisterKeyModalOpen] = useState(false);
@@ -45,10 +47,27 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
   const selectedKey = keys.find(k => k.id === selectedKeyId);
 
-  const filteredKeys = keys.filter(key => 
-    key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    key.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredKeys = keys.filter(key => {
+    // Search filter
+    const matchesSearch = 
+      key.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      key.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Profile filter
+    const matchesProfile = 
+      filterProfile === 'all' || 
+      (filterProfile === 'Servidor' && key.holder?.role === 'Servidor') ||
+      (filterProfile === 'Prestador' && key.holder?.role === 'Prestador') ||
+      (filterProfile === 'Visitante' && key.holder?.role === 'Visitante') ||
+      (filterProfile === 'available' && !key.holder);
+    
+    // Status filter
+    const matchesStatus = 
+      filterStatus === 'all' || 
+      key.status === filterStatus;
+    
+    return matchesSearch && matchesProfile && matchesStatus;
+  });
 
   const handleReturnConfirm = (observations: string) => {
     setConfirmationModal({
@@ -75,6 +94,14 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           ...key,
           status: 'available',
           holder: undefined,
+          lastUser: key.holder ? {
+            name: key.holder.name,
+            role: key.holder.role,
+            avatar: key.holder.avatar,
+            contact: selectedKey.holder?.contact,
+            area: selectedKey.holder?.area,
+            returnedAt: returnedDateTime
+          } : undefined,
           returnedAt: returnedDateTime,
           borrowedAt: undefined,
           lastUsed: returnedDateTime,
@@ -314,15 +341,37 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               />
             </div>
             <div className="flex gap-3">
-              <select className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
-                <option>Todos os Perfis</option>
+              <select 
+                value={filterProfile} 
+                onChange={(e) => setFilterProfile(e.target.value)}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+              >
+                <option value="all">Todos os Perfis</option>
+                <option value="available">Sem Portador</option>
+                <option value="Servidor">Servidor</option>
+                <option value="Prestador">Prestador</option>
+                <option value="Visitante">Visitante</option>
               </select>
-              <select className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer">
-                <option>Todos os Status</option>
+              <select 
+                value={filterStatus} 
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+              >
+                <option value="all">Todos os Status</option>
+                <option value="available">Disponível</option>
+                <option value="borrowed">Emprestada</option>
+                <option value="overdue">Atrasada</option>
               </select>
-              <button className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center gap-2 font-medium transition-colors">
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterProfile('all');
+                  setFilterStatus('all');
+                }}
+                className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center gap-2 font-medium transition-colors"
+              >
                 <Filter size={18} />
-                Filtrar
+                Limpar
               </button>
             </div>
           </div>
@@ -416,6 +465,35 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                   )}
                   {selectedKey.holder.area && (
                     <p className="text-xs text-blue-600 font-medium mt-1">{selectedKey.holder.area}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Last User Info - Appears when key is available */}
+            {selectedKey.status === 'available' && selectedKey.lastUser && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-gray-900">Último Uso</h4>
+                <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 flex flex-col items-center text-center">
+                  <div className="mb-3">
+                    <img 
+                      src={selectedKey.lastUser.avatar} 
+                      alt={selectedKey.lastUser.name}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-sm"
+                    />
+                  </div>
+                  <h5 className="font-bold text-gray-900">{selectedKey.lastUser.name}</h5>
+                  <p className="text-xs text-gray-600 mt-1">{selectedKey.lastUser.role}</p>
+                  {selectedKey.lastUser.contact && (
+                    <p className="text-xs text-gray-600 mt-1">{selectedKey.lastUser.contact}</p>
+                  )}
+                  {selectedKey.lastUser.area && (
+                    <p className="text-xs text-blue-700 font-medium mt-1">{selectedKey.lastUser.area}</p>
+                  )}
+                  {selectedKey.lastUser.returnedAt && (
+                    <p className="text-xs text-gray-500 mt-2 bg-white/50 px-2 py-1 rounded">
+                      Devolvida em: {selectedKey.lastUser.returnedAt}
+                    </p>
                   )}
                 </div>
               </div>

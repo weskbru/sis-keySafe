@@ -13,6 +13,14 @@ export interface KeyData {
     avatar: string;
     time?: string;
   };
+  lastUser?: {
+    name: string;
+    role: string;
+    avatar: string;
+    contact?: string;
+    area?: string;
+    returnedAt?: string;
+  };
   description?: string;
   allowedProfiles?: string[];
   observations?: string;

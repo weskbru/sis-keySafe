@@ -12,6 +12,49 @@ interface RegisterPersonModalProps {
 
 type Role = 'Servidor' | 'Prestador';
 
+const AREA_OPTIONS = [
+  'ACI - Assessoria de Cooperacao Internacional',
+  'ARI - Assessoria de Relacoes Institucionais e Comunicacao',
+  'AUDIN - Auditoria Interna',
+  'COAD - Coordenacao de Administracao',
+  'CCS - Coordenacao de Comunicacao Social',
+  'CDT - Coordenacao de Desenvolvimento de Competencias e Tecnologia',
+  'CEG - Coordenacao de Estruturacao e Governanca',
+  'CEN - Coordenacao de Estudo Estrategicos e Novos Negocios',
+  'CGP - Coordenacao de Gestao de Pessoas',
+  'CLC - Coordenacao de Licenciamento, Normas e Comercializacao',
+  'CMA - Coordenacao de Monitoramento e Avaliacao',
+  'COF - Coordenacao de Orcamento e Financas',
+  'OUV - Coordenacao de Ouvidoria e Acesso a Informacao',
+  'CPP - Coordenacao de Politicas e Programas',
+  'CRI - Coordenacao de Relacoes Institucionais',
+  'CSA - Coordenacao de Satelites e Aplicacoes',
+  'CSS - Coordenacao de Segmento Solo',
+  'CTI - Coordenacao de Tecnologia da Informacao',
+  'CVL - Coordenacao de Veiculos Lancadores',
+  'DGEP - Diretoria de Gestao de Portfolio',
+  'DGSE - Diretoria de Governanca do Setor Espacial',
+  'DIEN - Diretoria de Inteligencia Estrategica e Novos Negocios',
+  'DPOA - Diretoria de Planejamento, Orcamento e Administracao',
+  'DIAP - Divisao de Almoxarifado e Patrimonio',
+  'DAP - Divisao de Analises e Pareceres',
+  'DAI - Divisao de Apoio Institucional',
+  'DCAD - Divisao de Cadastro',
+  'DCON - Divisao de Contabilidade',
+  'DCONT - Divisao de Contratacoes',
+  'DEOF - Divisao de Execucao Orcamentaria e Financeira',
+  'DSEG - Divisao de Infraestrutura e Seguranca',
+  'DPAG - Divisao de Pagamento',
+  'DIPA - Divisao de Planejamento de Aquisicoes',
+  'DPSC - Divisao de Projetos e Solucoes Corporativas',
+  'DSG - Divisao de Servicos Gerais',
+  'DEDH - Divisao Estrategica de Desenvolvimento Humano',
+  'GAB - Gabinete',
+  'PRE - Presidencia',
+  'PF - Procuradoria Federal',
+  'PROT - Secao de Protocolo'
+];
+
 export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }: RegisterPersonModalProps) {
   if (!isOpen) return null;
 
@@ -20,9 +63,15 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
   const [document, setDocument] = useState(initialData?.document || '');
   const [phone, setPhone] = useState(initialData?.contact || '');
   const [area, setArea] = useState(initialData?.area || '');
+  const [areaQuery, setAreaQuery] = useState(initialData?.area || '');
+  const [showAreaList, setShowAreaList] = useState(false);
   const [observations, setObservations] = useState(initialData?.observations || '');
   const [avatarPreview, setAvatarPreview] = useState<string>(initialData?.avatar || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredAreas = AREA_OPTIONS.filter((option) =>
+    option.toLowerCase().includes(areaQuery.toLowerCase())
+  ).slice(0, 2);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,7 +111,7 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
       role,
       document,
       phone,
-      area: role === 'Servidor' ? area : undefined,
+      area: area || undefined,
       observations,
       avatar: avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
     });
@@ -166,17 +215,46 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
             </div>
           </div>
 
-          {/* Area Field (Only for Servidor) */}
-          {role === 'Servidor' && (
+          {/* Area Field (For Servidor and Prestador) */}
+          {(role === 'Servidor' || role === 'Prestador') && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              <label className="text-sm font-medium text-gray-700">Área</label>
-              <input 
-                type="text" 
-                placeholder="Ex: Financeiro, RH, TI"
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-              />
+              <label className="text-sm font-medium text-gray-700">Área/Setor</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  placeholder="Digite para buscar..."
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
+                  value={areaQuery}
+                  onChange={(e) => {
+                    setAreaQuery(e.target.value);
+                    setArea(e.target.value);
+                    setShowAreaList(true);
+                  }}
+                  onFocus={() => setShowAreaList(true)}
+                />
+                {showAreaList && areaQuery && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
+                    {filteredAreas.length > 0 ? (
+                      filteredAreas.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => {
+                            setArea(option);
+                            setAreaQuery(option);
+                            setShowAreaList(false);
+                          }}
+                          className="w-full px-4 py-2.5 hover:bg-blue-50 transition-colors text-left text-sm text-gray-700"
+                        >
+                          {option}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2.5 text-sm text-gray-500">Nenhum resultado</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
