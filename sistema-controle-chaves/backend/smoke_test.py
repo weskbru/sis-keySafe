@@ -7,11 +7,18 @@ Objetivo: Validar rapidamente que a infraestrutura crítica está operacional
 antes de um deploy ou após restart de containers.
 
 Uso:
-  # Com containers rodando:
+  # Recomendado — dentro do container (env vars já configuradas):
   docker compose exec backend python smoke_test.py
 
-  # Ou diretamente:
+  # No host (fora do container) — porta externa 8080:
   python smoke_test.py
+
+  # No host com porta customizada:
+  API_BASE=http://localhost:8080 python smoke_test.py
+
+Detecção automática de ambiente:
+  - Dentro do container (/.dockerenv presente): API_BASE=http://localhost:8000
+  - Fora do container (host): API_BASE=http://localhost:8080
 
 Retorna exit code 0 se todos os checks passarem, 1 caso contrário.
 =============================================================================
@@ -19,18 +26,27 @@ Retorna exit code 0 se todos os checks passarem, 1 caso contrário.
 import os
 import sys
 import json
+import pathlib
 import time
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
+
+def _dentro_do_container() -> bool:
+    """Detecta se o script está rodando dentro de um container Docker."""
+    return pathlib.Path("/.dockerenv").exists()
+
+
 # ─── Configurações via env (mesmas do settings.py) ───────────────────────────
+_API_DEFAULT = "http://localhost:8000" if _dentro_do_container() else "http://localhost:8080"
+
 DB_HOST     = os.environ.get("DB_HOST", "localhost")
 DB_PORT     = os.environ.get("DB_PORT", "5432")
 DB_NAME     = os.environ.get("DB_NAME", "sischave")
 DB_USER     = os.environ.get("DB_USER", "admin")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "admin")
-API_BASE    = os.environ.get("API_BASE", "http://localhost:8000")
+API_BASE    = os.environ.get("API_BASE", _API_DEFAULT)
 JWT_SECRET  = os.environ.get("JWT_SECRET_KEY", "django-insecure-chave-temporaria")
 
 TIMEOUT_SECONDS = 5
@@ -490,11 +506,13 @@ def check_data_integrity():
         check("ST-DATA-CONN | Conexão para verificação de integridade", False, str(e))
 
 def main():
+    ambiente = "container" if _dentro_do_container() else "host (fora do container)"
     print("\n" + "=" * 60)
     print("  SMOKE TEST — Sistema de Controle de Chaves")
     print(f"  Executado em: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    print(f"  API_BASE: {API_BASE}")
-    print(f"  DB: {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
+    print(f"  Ambiente:     {ambiente}")
+    print(f"  API_BASE:     {API_BASE}")
+    print(f"  DB:           {DB_USER}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
     print("=" * 60)
 
     check_database()
