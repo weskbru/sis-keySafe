@@ -1,27 +1,36 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Lock } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { useState } from 'react';
+import { AlertCircle, Eye, EyeOff, Lock } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-interface LoginPageProps {
-  onLogin: () => void;
-}
-
-export function LoginPage({ onLogin }: LoginPageProps) {
+export function LoginPage() {
+  const { login } = useAuth();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault();
-    onLogin();
+    setError('');
+    setIsLoading(true);
+    try {
+      await login({ username, password });
+    } catch {
+      setError('Usuário ou senha inválidos. Verifique suas credenciais.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center relative overflow-hidden">
       {/* Grid Background Pattern */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
-          backgroundSize: '40px 40px'
+          backgroundSize: '40px 40px',
         }}
       />
 
@@ -35,11 +44,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <AlertCircle size={16} className="shrink-0" />
+              {error}
+            </div>
+          )}
+
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Usuário ou E-mail</label>
-            <input 
-              type="text" 
-              placeholder="Digite seu usuário ou e-mail"
+            <label className="text-sm font-medium text-gray-700">Usuário</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Digite seu usuário"
+              required
+              autoComplete="username"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
             />
           </div>
@@ -47,12 +67,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Senha</label>
             <div className="relative">
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Digite sua senha"
+                required
+                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all pr-12"
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -62,11 +86,12 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
 
-          <button 
+          <button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors shadow-sm shadow-blue-200"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-lg transition-colors shadow-sm shadow-blue-200"
           >
-            Entrar no Sistema
+            {isLoading ? 'Autenticando...' : 'Entrar no Sistema'}
           </button>
 
           <div className="text-center">
