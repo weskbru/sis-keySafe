@@ -43,24 +43,23 @@ services:
     networks:
       - sischave_network
 
-  # FRONTEND COMENTADO TEMPORARIAMENTE PARA NÃO QUEBRAR O BUILD
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: sischave_frontend
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   ports:
-  #     - "${WEB_PORT}:${WEB_PORT}"
-  #   environment:
-  #     - API_BASE_URL=http://localhost:${API_PORT}
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - sischave_network
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sischave_frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - sischave_network
 
 networks:
   sischave_network:

@@ -90,7 +90,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between flex-shrink-0">
+        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">Pessoas Autorizadas</h2>
           <button 
             onClick={() => {
