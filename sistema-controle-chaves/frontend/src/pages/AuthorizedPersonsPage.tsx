@@ -13,6 +13,7 @@ import { Sidebar } from '../modals/Sidebar';
 import { MOCK_PEOPLE, PersonData } from '../data/mock';
 import { cn } from '../lib/utils';
 import { RegisterPersonModal } from '../modals/RegisterPersonModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 interface AuthorizedPersonsPageProps {
   onNavigate: (page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports') => void;
@@ -28,6 +29,13 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  
+  // Confirmation modals state
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    type: 'save-person' | 'edit-person' | 'delete-person' | null;
+    data?: any;
+  }>({ isOpen: false, type: null });
 
   // Lógica de filtragem
   const filteredPeople = people.filter(person => {
@@ -67,6 +75,17 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   };
 
   const handleRegisterConfirm = (data: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: data.id ? 'edit-person' : 'save-person',
+      data
+    });
+  };
+
+  const executeSavePerson = () => {
+    if (!confirmationModal.data) return;
+    const data = confirmationModal.data;
+
     if (data.id) {
       // Edit existing person
       setPeople(prevPeople => prevPeople.map(p => p.id === data.id ? {
@@ -77,14 +96,14 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
         contact: data.phone,
         area: data.area,
         observations: data.observations,
-        avatar: data.avatar || p.avatar // Update avatar if provided
+        avatar: data.avatar || p.avatar
       } : p));
     } else {
       // Create new person
       const newPerson: PersonData = {
         id: Math.random().toString(36).substr(2, 9),
         name: data.name,
-        email: '', // Email is not collected in the modal
+        email: '',
         avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
         role: data.role,
         document: data.document,
@@ -104,8 +123,60 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem certeza que deseja remover esta pessoa?')) {
-      setPeople(prevPeople => prevPeople.filter(p => p.id !== id));
+    setConfirmationModal({
+      isOpen: true,
+      type: 'delete-person',
+      data: { id }
+    });
+  };
+
+  const executeDeletePerson = () => {
+    if (!confirmationModal.data) return;
+    setPeople(prevPeople => prevPeople.filter(p => p.id !== confirmationModal.data.id));
+  };
+
+  const handleConfirmAction = () => {
+    switch (confirmationModal.type) {
+      case 'save-person':
+      case 'edit-person':
+        executeSavePerson();
+        break;
+      case 'delete-person':
+        executeDeletePerson();
+        break;
+    }
+  };
+
+  const getConfirmationConfig = () => {
+    switch (confirmationModal.type) {
+      case 'save-person':
+        return {
+          title: 'Confirmar Cadastro',
+          message: 'Deseja realmente cadastrar esta pessoa?',
+          confirmText: 'Sim, Cadastrar',
+          type: 'success' as const
+        };
+      case 'edit-person':
+        return {
+          title: 'Confirmar Alterações',
+          message: 'Deseja realmente salvar as alterações desta pessoa?',
+          confirmText: 'Sim, Salvar',
+          type: 'success' as const
+        };
+      case 'delete-person':
+        return {
+          title: 'Confirmar Exclusão',
+          message: 'Tem certeza que deseja remover esta pessoa? Esta ação não pode ser desfeita.',
+          confirmText: 'Sim, Remover',
+          type: 'danger' as const
+        };
+      default:
+        return {
+          title: 'Confirmar',
+          message: 'Deseja continuar?',
+          confirmText: 'Confirmar',
+          type: 'warning' as const
+        };
     }
   };
 
@@ -306,6 +377,14 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
           }}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, type: null })}
+        onConfirm={handleConfirmAction}
+        {...getConfirmationConfig()}
+      />
     </div>
   );
 }

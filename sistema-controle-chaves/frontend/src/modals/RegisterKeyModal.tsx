@@ -11,6 +11,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
   if (!isOpen) return null;
 
   const [keyName, setKeyName] = useState('');
+  const [location, setLocation] = useState('Bloco A');
   const [allowedProfiles, setAllowedProfiles] = useState<string[]>([]);
   const [description, setDescription] = useState('');
 
@@ -25,6 +26,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
   const handleSubmit = () => {
     onConfirm({
       name: keyName,
+      location,
       allowedProfiles,
       description
     });
@@ -59,6 +61,19 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
             />
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Localização</label>
+            <select
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white cursor-pointer"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="Bloco A">Bloco A</option>
+              <option value="Bloco B">Bloco B</option>
+            </select>
           </div>
 
           {/* Allowed Profiles */}

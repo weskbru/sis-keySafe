@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, Save, Trash2, AlertCircle } from 'lucide-react';
+import { X, Key, Save, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { KeyData } from '../data/mock';
 
@@ -17,7 +17,6 @@ export function EditKeyModal({ isOpen, onClose, onConfirm, onDelete, keyData }: 
   const [keyName, setKeyName] = useState(keyData.name);
   const [allowedProfiles, setAllowedProfiles] = useState<string[]>(keyData.allowedProfiles || []);
   const [description, setDescription] = useState(keyData.description || '');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const toggleProfile = (profile: string) => {
     setAllowedProfiles(prev => 
@@ -109,39 +108,13 @@ export function EditKeyModal({ isOpen, onClose, onConfirm, onDelete, keyData }: 
 
           {/* Delete Section */}
           <div className="pt-4 border-t border-gray-200">
-            {!showDeleteConfirm ? (
-              <button 
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200 font-medium"
-              >
-                <Trash2 size={18} />
-                Excluir Chave
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-red-900">Tem certeza?</p>
-                    <p className="text-xs text-red-700 mt-1">Esta ação não pode ser desfeita.</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
-                  >
-                    Confirmar Exclusão
-                  </button>
-                </div>
-              </div>
-            )}
+            <button 
+              onClick={handleDelete}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors border border-red-200 font-medium"
+            >
+              <Trash2 size={18} />
+              Excluir Chave
+            </button>
           </div>
         </div>
 

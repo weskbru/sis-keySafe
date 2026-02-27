@@ -20,6 +20,7 @@ import { ReturnKeyModal } from '../modals/ReturnKeyModal';
 import { AssignKeyModal } from '../modals/AssignKeyModal';
 import { RegisterKeyModal } from '../modals/RegisterKeyModal';
 import { EditKeyModal } from '../modals/EditKeyModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -34,6 +35,13 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [isRegisterKeyModalOpen, setIsRegisterKeyModalOpen] = useState(false);
   const [isEditKeyModalOpen, setIsEditKeyModalOpen] = useState(false);
   const [keys, setKeys] = useState<KeyData[]>(MOCK_KEYS);
+  
+  // Confirmation modals state
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    type: 'save-key' | 'delete-key' | 'edit-key' | 'assign-key' | 'return-key' | null;
+    data?: any;
+  }>({ isOpen: false, type: null });
 
   const selectedKey = keys.find(k => k.id === selectedKeyId);
 
@@ -43,7 +51,15 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   );
 
   const handleReturnConfirm = (observations: string) => {
-    if (!selectedKey) return;
+    setConfirmationModal({
+      isOpen: true,
+      type: 'return-key',
+      data: { observations }
+    });
+  };
+
+  const executeReturnKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -53,7 +69,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           holder: undefined,
           borrowedAt: undefined,
           lastUsed: 'Hoje',
-          observations: observations || undefined
+          observations: confirmationModal.data.observations || undefined
         };
       }
       return key;
@@ -62,7 +78,16 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleAssignConfirm = (data: any) => {
-    if (!selectedKey) return;
+    setConfirmationModal({
+      isOpen: true,
+      type: 'assign-key',
+      data
+    });
+  };
+
+  const executeAssignKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
+    const data = confirmationModal.data;
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -88,11 +113,22 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleRegisterKeyConfirm = (data: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'save-key',
+      data
+    });
+  };
+
+  const executeSaveKey = () => {
+    if (!confirmationModal.data) return;
+    const data = confirmationModal.data;
+
     const newKey: KeyData = {
       id: Math.random().toString(36).substr(2, 9),
       name: data.name,
-      location: 'Nova Localização', // You might want to add this field to the modal or derive it
-      category: 'Geral', // Default category
+      location: data.location || 'Bloco A',
+      category: 'Geral',
       status: 'available',
       description: data.description,
       allowedProfiles: data.allowedProfiles,
@@ -104,7 +140,16 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleEditKeyConfirm = (data: { name: string; allowedProfiles: string[]; description?: string }) => {
-    if (!selectedKey) return;
+    setConfirmationModal({
+      isOpen: true,
+      type: 'edit-key',
+      data
+    });
+  };
+
+  const executeEditKey = () => {
+    if (!selectedKey || !confirmationModal.data) return;
+    const data = confirmationModal.data;
 
     setKeys(prevKeys => prevKeys.map(key => {
       if (key.id === selectedKey.id) {
@@ -121,11 +166,85 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   };
 
   const handleDeleteKey = () => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'delete-key'
+    });
+  };
+
+  const executeDeleteKey = () => {
     if (!selectedKey) return;
 
     setKeys(prevKeys => prevKeys.filter(key => key.id !== selectedKey.id));
     setSelectedKeyId(null);
     setIsEditKeyModalOpen(false);
+  };
+
+  const handleConfirmAction = () => {
+    switch (confirmationModal.type) {
+      case 'save-key':
+        executeSaveKey();
+        break;
+      case 'delete-key':
+        executeDeleteKey();
+        break;
+      case 'edit-key':
+        executeEditKey();
+        break;
+      case 'assign-key':
+        executeAssignKey();
+        break;
+      case 'return-key':
+        executeReturnKey();
+        break;
+    }
+  };
+
+  const getConfirmationConfig = () => {
+    switch (confirmationModal.type) {
+      case 'save-key':
+        return {
+          title: 'Confirmar Cadastro',
+          message: 'Deseja realmente cadastrar esta chave?',
+          confirmText: 'Sim, Cadastrar',
+          type: 'success' as const
+        };
+      case 'delete-key':
+        return {
+          title: 'Confirmar Exclusão',
+          message: 'Tem certeza que deseja excluir esta chave? Esta ação não pode ser desfeita.',
+          confirmText: 'Sim, Excluir',
+          type: 'danger' as const
+        };
+      case 'edit-key':
+        return {
+          title: 'Confirmar Alterações',
+          message: 'Deseja realmente salvar as alterações desta chave?',
+          confirmText: 'Sim, Salvar',
+          type: 'success' as const
+        };
+      case 'assign-key':
+        return {
+          title: 'Confirmar Concessão',
+          message: 'Deseja realmente conceder esta chave?',
+          confirmText: 'Sim, Conceder',
+          type: 'warning' as const
+        };
+      case 'return-key':
+        return {
+          title: 'Confirmar Devolução',
+          message: 'Deseja realmente registrar a devolução desta chave?',
+          confirmText: 'Sim, Registrar',
+          type: 'success' as const
+        };
+      default:
+        return {
+          title: 'Confirmar',
+          message: 'Deseja continuar?',
+          confirmText: 'Confirmar',
+          type: 'warning' as const
+        };
+    }
   };
 
   return (
@@ -391,6 +510,14 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           keyData={selectedKey}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, type: null })}
+        onConfirm={handleConfirmAction}
+        {...getConfirmationConfig()}
+      />
     </div>
   );
 }
