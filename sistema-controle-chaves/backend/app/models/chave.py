@@ -10,7 +10,10 @@ class Chave(models.Model):
 
     codigo = models.CharField(max_length=50, unique=True)
     descricao = models.CharField(max_length=200, blank=True, default='')
+    localizacao = models.CharField(max_length=100, blank=True, default='')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DISPONIVEL')
+    permitir_servidor = models.BooleanField(default=True)
+    permitir_prestador = models.BooleanField(default=True)
     ativo = models.BooleanField(default=True)
 
     class Meta:

@@ -31,6 +31,7 @@ services:
     restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --fake-initial &&
+             python manage.py create_initial_users &&
              python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
@@ -45,6 +46,10 @@ services:
       - JWT_SECRET_KEY=${SECRET_KEY}
       - DJANGO_DEBUG=${DJANGO_DEBUG}
       - CORS_ALLOW_ALL=${CORS_ALLOW_ALL}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - BLOCO_A_PASSWORD=${BLOCO_A_PASSWORD}
+      - BLOCO_F_PASSWORD=${BLOCO_F_PASSWORD}
     depends_on:
       database:
         condition: service_healthy
