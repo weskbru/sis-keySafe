@@ -402,7 +402,7 @@ function FilterModal({
 }) {
   if (!isOpen) return null;
 
-  const roles = ['Servidor', 'Prestador', 'Visitante'];
+  const roles = ['Servidor', 'Prestador'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -468,7 +468,6 @@ function RoleBadge({ role }: { role: PersonData['role'] }) {
   const styles = {
     'Servidor': 'bg-blue-100 text-blue-700',
     'Prestador': 'bg-orange-100 text-orange-700',
-    'Visitante': 'bg-gray-100 text-gray-700',
   };
 
   return (

@@ -523,7 +523,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                   )}
                   {selectedKey.lastUser.returnedAt && (
                     <p className="text-xs text-gray-500 mt-2 bg-white/50 px-2 py-1 rounded">
-                      Devolvida em: {selectedKey.lastUser.returnedAt}
+                      {selectedKey.lastUser.returnedAt}
                     </p>
                   )}
                 </div>
@@ -551,9 +551,13 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 </div>
               </div>
               <div className="bg-gray-50 p-4 rounded-xl">
-                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Entrega</p>
+                <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                  {selectedKey.status === 'borrowed' ? 'Entrega Prevista' : 'Entrega'}
+                </p>
                 <p className="text-sm font-bold text-gray-900">
-                  {selectedKey.borrowedAt || "—"}
+                  {selectedKey.status === 'available' && selectedKey.lastUser?.returnedAt
+                    ? selectedKey.lastUser.returnedAt
+                    : selectedKey.borrowedAt || "—"}
                 </p>
               </div>
             </div>

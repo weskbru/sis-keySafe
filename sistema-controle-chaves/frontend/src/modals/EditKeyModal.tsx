@@ -6,7 +6,7 @@ import { KeyData } from '../data/mock';
 interface EditKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: { name: string; allowedProfiles: string[]; description?: string }) => void;
+  onConfirm: (data: { name: string; location: string; allowedProfiles: string[]; description?: string }) => void;
   onDelete: () => void;
   keyData: KeyData;
 }
@@ -15,6 +15,7 @@ export function EditKeyModal({ isOpen, onClose, onConfirm, onDelete, keyData }: 
   if (!isOpen) return null;
 
   const [keyName, setKeyName] = useState(keyData.name);
+  const [location, setLocation] = useState(keyData.location);
   const [allowedProfiles, setAllowedProfiles] = useState<string[]>(keyData.allowedProfiles || []);
   const [description, setDescription] = useState(keyData.description || '');
 
@@ -29,6 +30,7 @@ export function EditKeyModal({ isOpen, onClose, onConfirm, onDelete, keyData }: 
   const handleSubmit = () => {
     onConfirm({
       name: keyName,
+      location,
       allowedProfiles,
       description
     });
@@ -68,6 +70,19 @@ export function EditKeyModal({ isOpen, onClose, onConfirm, onDelete, keyData }: 
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
             />
+          </div>
+
+          {/* Location */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Localização</label>
+            <select
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white cursor-pointer"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            >
+              <option value="Bloco A">Bloco A</option>
+              <option value="Bloco F">Bloco F</option>
+            </select>
           </div>
 
           {/* Allowed Profiles */}
