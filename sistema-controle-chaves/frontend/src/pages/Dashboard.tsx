@@ -19,6 +19,7 @@ import { Sidebar } from '../modals/Sidebar';
 import { ReturnKeyModal } from '../modals/ReturnKeyModal';
 import { AssignKeyModal } from '../modals/AssignKeyModal';
 import { RegisterKeyModal } from '../modals/RegisterKeyModal';
+import { EditKeyModal } from '../modals/EditKeyModal';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -31,6 +32,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isRegisterKeyModalOpen, setIsRegisterKeyModalOpen] = useState(false);
+  const [isEditKeyModalOpen, setIsEditKeyModalOpen] = useState(false);
   const [keys, setKeys] = useState<KeyData[]>(MOCK_KEYS);
 
   const selectedKey = keys.find(k => k.id === selectedKeyId);
@@ -70,8 +72,11 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           holder: {
             name: data.personName || 'Desconhecido',
             role: data.userType,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
-            time: 'Agora'
+            avatar: data.personAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.personName || 'User')}&background=random`,
+            time: 'Agora',
+            contact: data.personContact,
+            area: data.personArea,
+            document: data.personDocument
           },
           borrowedAt: new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
           observations: data.observations
@@ -94,8 +99,33 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
       lastUsed: 'Nunca'
     };
     
-    setKeys([newKey, ...keys]);
+    setKeys(prevKeys => [newKey, ...prevKeys]);
     setIsRegisterKeyModalOpen(false);
+  };
+
+  const handleEditKeyConfirm = (data: { name: string; allowedProfiles: string[]; description?: string }) => {
+    if (!selectedKey) return;
+
+    setKeys(prevKeys => prevKeys.map(key => {
+      if (key.id === selectedKey.id) {
+        return {
+          ...key,
+          name: data.name,
+          allowedProfiles: data.allowedProfiles,
+          description: data.description
+        };
+      }
+      return key;
+    }));
+    setIsEditKeyModalOpen(false);
+  };
+
+  const handleDeleteKey = () => {
+    if (!selectedKey) return;
+
+    setKeys(prevKeys => prevKeys.filter(key => key.id !== selectedKey.id));
+    setSelectedKeyId(null);
+    setIsEditKeyModalOpen(false);
   };
 
   return (
@@ -244,7 +274,13 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                     )}
                   </div>
                   <h5 className="font-bold text-gray-900">{selectedKey.holder.name}</h5>
-                  <p className="text-xs text-gray-500 mt-1">Morador - Bloco B, Apto 402</p>
+                  <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.role}</p>
+                  {selectedKey.holder.contact && (
+                    <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.contact}</p>
+                  )}
+                  {selectedKey.holder.area && (
+                    <p className="text-xs text-blue-600 font-medium mt-1">{selectedKey.holder.area}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -312,7 +348,10 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               </button>
             )}
             
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
+            <button 
+              onClick={() => setIsEditKeyModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
+            >
               <Edit2 size={16} />
               Editar
             </button>
@@ -342,6 +381,16 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         onClose={() => setIsRegisterKeyModalOpen(false)}
         onConfirm={handleRegisterKeyConfirm}
       />
+
+      {selectedKey && (
+        <EditKeyModal 
+          isOpen={isEditKeyModalOpen}
+          onClose={() => setIsEditKeyModalOpen(false)}
+          onConfirm={handleEditKeyConfirm}
+          onDelete={handleDeleteKey}
+          keyData={selectedKey}
+        />
+      )}
     </div>
   );
 }
@@ -387,8 +436,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
       <div className="flex justify-between items-start mb-1">
         <h3 className="font-bold text-gray-900 text-lg">{data.name} -</h3>
       </div>
-      <h3 className="font-bold text-gray-900 text-lg mb-1">{data.location}</h3>
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-4">{data.category}</p>
+      <h3 className="font-bold text-gray-900 text-lg mb-4">{data.location}</h3>
 
       {/* Footer Info */}
       <div className="pt-4 border-t border-gray-50 flex items-center justify-between">

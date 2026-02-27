@@ -47,6 +47,10 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
       userType,
       personName: selectedPerson?.name || searchTerm,
       personId: selectedPerson?.id,
+      personContact: selectedPerson?.contact,
+      personArea: selectedPerson?.area,
+      personDocument: selectedPerson?.document,
+      personAvatar: selectedPerson?.avatar,
       withdrawalDate,
       returnDate,
       observations

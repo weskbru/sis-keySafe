@@ -69,7 +69,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   const handleRegisterConfirm = (data: any) => {
     if (data.id) {
       // Edit existing person
-      setPeople(people.map(p => p.id === data.id ? {
+      setPeople(prevPeople => prevPeople.map(p => p.id === data.id ? {
         ...p,
         name: data.name,
         role: data.role,
@@ -92,7 +92,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
         area: data.area,
         observations: data.observations
       };
-      setPeople([newPerson, ...people]);
+      setPeople(prevPeople => [newPerson, ...prevPeople]);
     }
     setIsRegisterModalOpen(false);
     setEditingPerson(null);
@@ -105,7 +105,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
 
   const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja remover esta pessoa?')) {
-      setPeople(people.filter(p => p.id !== id));
+      setPeople(prevPeople => prevPeople.filter(p => p.id !== id));
     }
   };
 
