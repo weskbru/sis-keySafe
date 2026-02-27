@@ -5,7 +5,7 @@ from .setor import Setor
 class Pessoa(models.Model):
     TIPO_VINCULO_CHOICES = [
         ('SERVIDOR', 'Servidor'),
-        ('TERCEIRIZADO', 'Terceirizado'),
+        ('PRESTADOR', 'Prestador'),
     ]
 
     nome_completo = models.CharField(max_length=150)
