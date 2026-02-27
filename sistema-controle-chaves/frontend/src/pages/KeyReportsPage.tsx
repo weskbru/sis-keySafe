@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MOCK_KEYS, MOCK_PEOPLE, KeyData } from '../data/mock';
+import { Sidebar } from '../modals/Sidebar';
 
 interface KeyReportsPageProps {
   onNavigate: (page: any) => void;
@@ -147,40 +148,36 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
   ]);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200">
-            <Key className="text-white w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Relatório de Empréstimo de Chaves</h1>
-            <p className="text-xs text-gray-500">Gestão e controle de acesso</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Imprimir">
-            <Printer size={20} />
-          </button>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar CSV">
-            <FileText size={20} />
-          </button>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar PDF">
-            <FileSpreadsheet size={20} />
-          </button>
-          <div className="h-8 w-px bg-gray-200 mx-1"></div>
-          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-colors" onClick={() => onNavigate('dashboard')}>
-             <img 
-              src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop&crop=faces" 
-              alt="User" 
-              className="w-9 h-9 rounded-full object-cover border border-gray-200"
-            />
-          </div>
-        </div>
-      </header>
+    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
+      <Sidebar activePage="key-reports" onNavigate={onNavigate} onLogout={onLogout} />
 
-      <main className="flex-1 p-8 max-w-7xl mx-auto w-full space-y-6">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200">
+              <Key className="text-white w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Relatório de Empréstimo de Chaves</h1>
+              <p className="text-xs text-gray-500">Gestão e controle de acesso</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Imprimir">
+              <Printer size={20} />
+            </button>
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar CSV">
+              <FileText size={20} />
+            </button>
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors" title="Exportar PDF">
+              <FileSpreadsheet size={20} />
+            </button>
+          </div>
+        </header>
+
+        {/* Content Scroll Area */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
         
         {/* Filters Section */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -419,6 +416,7 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </main>
     </div>

@@ -24,7 +24,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
   };
 
   const handleSubmit = () => {
-    if (!keyName.trim() || !location.trim() || allowedProfiles.length === 0 || !description.trim()) {
+    if (!keyName.trim() || !location.trim() || allowedProfiles.length === 0) {
       alert('Preencha todos os campos obrigatorios.');
       return;
     }
@@ -78,7 +78,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
               required
             >
               <option value="Bloco A">Bloco A</option>
-              <option value="Bloco B">Bloco B</option>
+              <option value="Bloco F">Bloco F</option>
             </select>
           </div>
 
