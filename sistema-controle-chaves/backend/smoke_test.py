@@ -489,11 +489,6 @@ def check_data_integrity():
     except Exception as e:
         check("ST-DATA-CONN | Conexão para verificação de integridade", False, str(e))
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# RUNNER
-# ─────────────────────────────────────────────────────────────────────────────
-
 def main():
     print("\n" + "=" * 60)
     print("  SMOKE TEST — Sistema de Controle de Chaves")
