@@ -13,7 +13,7 @@ import { Sidebar } from '../modals/Sidebar';
 import { MOCK_PEOPLE, PersonData } from '../data/mock';
 import { cn } from '../lib/utils';
 import { RegisterPersonModal } from '../modals/RegisterPersonModal';
-import { ConfirmationModal } from '../components/ConfirmationModal';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 interface AuthorizedPersonsPageProps {
   onNavigate: (page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports') => void;
@@ -402,7 +402,7 @@ function FilterModal({
 }) {
   if (!isOpen) return null;
 
-  const roles = ['Servidor', 'Prestador', 'Visitante'];
+  const roles = ['Servidor', 'Prestador'];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -468,7 +468,6 @@ function RoleBadge({ role }: { role: PersonData['role'] }) {
   const styles = {
     'Servidor': 'bg-blue-100 text-blue-700',
     'Prestador': 'bg-orange-100 text-orange-700',
-    'Visitante': 'bg-gray-100 text-gray-700',
   };
 
   return (
