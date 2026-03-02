@@ -762,7 +762,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
             "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
             data.status === 'available' && "bg-emerald-500",
             data.status === 'borrowed' && "bg-amber-500",
-            data.status === 'overdue' && "bg-red-500",
+            data.status === 'overdue' && "bg-red-500 animate-pulse",
           )} />
         </div>
 
