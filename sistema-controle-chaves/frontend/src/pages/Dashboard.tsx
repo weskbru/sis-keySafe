@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   Search, 
   Bell, 
-  HelpCircle, 
   Filter, 
   Clock, 
   CheckCircle2, 
@@ -11,6 +10,8 @@ import {
   Edit2,
   Plus,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MOCK_KEYS, KeyData } from '../data/mock';
@@ -37,6 +38,8 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
   const [isEditKeyModalOpen, setIsEditKeyModalOpen] = useState(false);
   const [isBellOpen, setIsBellOpen] = useState(false);
   const [keys, setKeys] = useState<KeyData[]>(MOCK_KEYS);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 14;
   
   // Confirmation modals state
   const [confirmationModal, setConfirmationModal] = useState<{
@@ -70,6 +73,29 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
     
     return matchesSearch && matchesProfile && matchesStatus;
   });
+
+  // Resetar página ao filtrar
+  const [prevSearchTerm, setPrevSearchTerm] = useState('');
+  const [prevFilterProfile, setPrevFilterProfile] = useState('all');
+  const [prevFilterStatus, setPrevFilterStatus] = useState('all');
+
+  if (searchTerm !== prevSearchTerm || filterProfile !== prevFilterProfile || filterStatus !== prevFilterStatus) {
+    setCurrentPage(1);
+    setPrevSearchTerm(searchTerm);
+    setPrevFilterProfile(filterProfile);
+    setPrevFilterStatus(filterStatus);
+  }
+
+  const totalPages = Math.ceil(filteredKeys.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentKeys = filteredKeys.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const handleReturnConfirm = (observations: string) => {
     setConfirmationModal({
@@ -352,9 +378,6 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 </div>
               )}
             </div>
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-              <HelpCircle size={20} />
-            </button>
           </div>
         </header>
 
@@ -407,8 +430,8 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           </div>
 
           {/* Grid */}
-          <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,220px))] justify-start gap-x-2 gap-y-3 pb-8">
-            {filteredKeys.map((keyItem) => (
+          <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,220px))] justify-start gap-x-2 gap-y-3 pb-4">
+            {currentKeys.map((keyItem) => (
               <KeyCard 
                 key={keyItem.id} 
                 data={keyItem} 
@@ -417,6 +440,47 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               />
             ))}
           </div>
+
+          {/* Pagination */}
+          {filteredKeys.length > 0 && totalPages > 1 && (
+            <div className="p-4 bg-white rounded-xl border border-gray-100 flex items-center justify-between">
+              <span className="text-sm text-gray-500">
+                Exibindo <span className="font-bold text-gray-900">{startIndex + 1}-{Math.min(endIndex, filteredKeys.length)}</span> de <span className="font-bold text-gray-900">{filteredKeys.length}</span> chaves
+              </span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-lg border font-medium transition-colors",
+                      currentPage === page
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200"
+                        : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                    )}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -679,7 +743,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
         "bg-white p-3 rounded-xl border transition-all cursor-pointer group relative overflow-hidden flex flex-col aspect-[3/4] w-full max-w-[220px] mx-auto",
         isSelected 
           ? "border-blue-500 ring-2 ring-blue-100 shadow-md" 
-          : "border-gray-200 hover:border-blue-200 hover:shadow-sm"
+          : "border-gray-200 hover:border-gray-300 hover:shadow-md hover:-translate-y-1"
       )}
     >
       <div className="flex-1 flex flex-col justify-center">
@@ -739,7 +803,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
         )}
 
         {data.status === 'available' ? (
-           <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+           <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-gray-100 group-hover:text-gray-600 transition-colors">
              <ArrowRight size={14} />
            </div>
         ) : (

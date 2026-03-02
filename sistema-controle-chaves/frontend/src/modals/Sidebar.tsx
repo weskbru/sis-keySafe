@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, FileText, Settings, Key, LogOut, Users } from 'lucide-react';
+import { LayoutDashboard, FileText, LogOut, Users } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface SidebarProps {
@@ -39,12 +39,6 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
           label="Relatórios" 
           active={activePage === 'reports'} 
           onClick={() => onNavigate('reports')}
-        />
-        <NavItem 
-          icon={<Settings size={20} />} 
-          label="Configurações" 
-          active={activePage === 'settings'} 
-          onClick={() => onNavigate('settings')}
         />
       </nav>
 

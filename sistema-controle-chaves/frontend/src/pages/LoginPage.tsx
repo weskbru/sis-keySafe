@@ -103,7 +103,7 @@ export function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
           <p className="text-xs text-gray-400">
-            © 2024 KeySafe Systems. Todos os direitos reservados.
+            © 2026 Agência Espacial Brasileira
           </p>
         </div>
       </div>
