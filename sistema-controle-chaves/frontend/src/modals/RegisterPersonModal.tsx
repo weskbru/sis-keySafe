@@ -41,6 +41,9 @@ export function RegisterPersonModal({
     .filter((s) => s.nome.toLowerCase().includes(areaQuery.toLowerCase()))
     .slice(0, 5);
 
+  const toTitleCase = (value: string) =>
+    value.replace(/\b\w/g, (c) => c.toUpperCase());
+
   const formatCpf = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     const parts = digits.match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
@@ -179,7 +182,7 @@ export function RegisterPersonModal({
               placeholder="Ex: Maria José da Silva"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(toTitleCase(e.target.value))}
             />
           </div>
 

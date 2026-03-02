@@ -70,6 +70,20 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
   useEffect(() => {
     loadDashboardData();
+
+    // Atualiza a cada 10 segundos para refletir mudanças feitas por outros usuários
+    const interval = setInterval(loadDashboardData, 10_000);
+
+    // Atualiza imediatamente ao retornar para a aba/janela
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') loadDashboardData();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [loadDashboardData]);
 
   const selectedKey = keys.find((k) => k.id === selectedKeyId);
@@ -549,6 +563,9 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                   </div>
                   <h5 className="font-bold text-gray-900">{selectedKey.holder.name}</h5>
                   <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.role}</p>
+                  {selectedKey.holder.cpf && (
+                    <p className="text-xs font-mono text-gray-500 mt-1">{selectedKey.holder.cpf}</p>
+                  )}
                   {selectedKey.holder.contact && (
                     <p className="text-xs text-gray-500 mt-1">{selectedKey.holder.contact}</p>
                   )}
@@ -652,13 +669,15 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 Registar Devolução
               </button>
             )}
-            <button
-              onClick={() => setIsEditKeyModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
-            >
-              <Edit2 size={16} />
-              Editar
-            </button>
+            {selectedKey.status !== 'borrowed' && selectedKey.status !== 'overdue' && (
+              <button
+                onClick={() => setIsEditKeyModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
+              >
+                <Edit2 size={16} />
+                Editar
+              </button>
+            )}
           </div>
         </aside>
       )}

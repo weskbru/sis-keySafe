@@ -14,6 +14,7 @@ export interface KeyData {
     role: string;
     avatar: string;
     time?: string;
+    cpf?: string;
   };
   lastUser?: {
     name: string;

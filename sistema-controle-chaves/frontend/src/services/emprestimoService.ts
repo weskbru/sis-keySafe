@@ -13,7 +13,7 @@ export interface ApiEmprestimo {
   pessoa: {
     id: number;
     nome_completo: string;
-    cpf: string;
+    cpf_display: string;
     tipo_vinculo: string;
     setor_nome: string | null;
   };
@@ -82,6 +82,7 @@ export function toKeyData(chave: ApiChave, emprestimosAtivos: ApiEmprestimo[]) {
           time: formatRelativeTime(emp.data_retirada),
           contact: undefined,
           area: emp.pessoa.setor_nome || undefined,
+          cpf: emp.pessoa.cpf_display,
         }
       : undefined,
     emprestimoId: emp ? String(emp.id) : undefined,

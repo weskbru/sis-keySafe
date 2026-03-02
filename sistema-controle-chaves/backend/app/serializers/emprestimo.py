@@ -16,10 +16,22 @@ class ChaveResumoSerializer(serializers.ModelSerializer):
 
 class PessoaResumoSerializer(serializers.ModelSerializer):
     setor_nome = serializers.CharField(source='setor.nome', read_only=True)
+    cpf_display = serializers.SerializerMethodField()
+
+    def get_cpf_display(self, obj):
+        cpf = obj.cpf
+        request = self.context.get('request')
+        is_privileged = (
+            request and request.user and request.user.is_authenticated
+            and (request.user.is_staff or request.user.groups.filter(name='Operadores').exists())
+        )
+        if is_privileged:
+            return cpf
+        return f'***.***.**{cpf[-5:]}'
 
     class Meta:
         model = Pessoa
-        fields = ['id', 'nome_completo', 'cpf', 'tipo_vinculo', 'setor_nome']
+        fields = ['id', 'nome_completo', 'cpf_display', 'tipo_vinculo', 'setor_nome']
 
 
 class EmprestimoSerializer(serializers.ModelSerializer):
