@@ -9,3 +9,6 @@ class ChaveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chave
         fields = '__all__'
+
+    def validate_codigo(self, value):
+        return value.strip().upper()

@@ -42,6 +42,9 @@ class PessoaSerializer(serializers.ModelSerializer):
             data['foto'] = request.build_absolute_uri(instance.foto.url)
         return data
 
+    def validate_nome_completo(self, value: str) -> str:
+        return value.strip().title()
+
     def validate_cpf(self, value: str) -> str:
         if not _CPF_RE.match(value):
             raise serializers.ValidationError(
