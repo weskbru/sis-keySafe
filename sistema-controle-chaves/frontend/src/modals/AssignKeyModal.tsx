@@ -1,18 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { X, Key, Home, Users, Search, Calendar, CheckCircle2, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { KeyData, MOCK_PEOPLE, PersonData } from '../data/mock';
+import { KeyData, PersonData } from '../data/mock';
 
 interface AssignKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (data: any) => void;
   keyData: KeyData;
+  pessoas: PersonData[];
 }
 
 type UserType = 'Servidor' | 'Prestador';
 
-export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKeyModalProps) {
+export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData, pessoas }: AssignKeyModalProps) {
   if (!isOpen) return null;
 
   const [userType, setUserType] = useState<UserType>('Servidor');
@@ -22,27 +23,24 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
   const [returnDate, setReturnDate] = useState('');
   const [observations, setObservations] = useState('');
 
-  // Get current datetime for automatic withdrawal
   const now = useMemo(() => new Date(), []);
   const withdrawalDateTime = useMemo(() => {
-    return now.toLocaleString('pt-BR', { 
-      day: '2-digit', 
-      month: '2-digit', 
+    return now.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit' 
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }, [now]);
 
-  // Filtrar pessoas por search term e userType
-  const filteredPeople = MOCK_PEOPLE.filter(person => {
+  const filteredPeople = pessoas.filter((person) => {
     const matchesType = person.role === userType;
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       person.name.toLowerCase().includes(searchLower) ||
       person.document.toLowerCase().includes(searchLower) ||
       person.contact.toLowerCase().includes(searchLower);
-    
     return matchesType && matchesSearch;
   });
 
@@ -71,7 +69,8 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
       personAvatar: selectedPerson?.avatar,
       customWithdrawalTime: withdrawalDateTime,
       expectedReturnDate: returnDate ? formatDateTimeLocal(returnDate) : undefined,
-      observations
+      returnDateIso: returnDate || undefined,
+      observations,
     });
     onClose();
   };
@@ -85,7 +84,7 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
             <Key size={24} />
             <h2 className="text-xl font-bold text-gray-900">Conceder Chave</h2>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
           >
@@ -98,8 +97,8 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Perfil</label>
             <div className="grid grid-cols-2 gap-4">
-              <UserTypeOption 
-                selected={userType === 'Servidor'} 
+              <UserTypeOption
+                selected={userType === 'Servidor'}
                 onClick={() => {
                   setUserType('Servidor');
                   setSelectedPerson(null);
@@ -110,8 +109,8 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
                 title="Servidor"
                 subtitle="Acesso padrão"
               />
-              <UserTypeOption 
-                selected={userType === 'Prestador'} 
+              <UserTypeOption
+                selected={userType === 'Prestador'}
                 onClick={() => {
                   setUserType('Prestador');
                   setSelectedPerson(null);
@@ -130,9 +129,9 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Buscar Pessoa</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none z-10" />
-              <input 
-                type="text" 
-                placeholder="Digite o nome ou CPF da pessoa cadastrada..." 
+              <input
+                type="text"
+                placeholder="Digite o nome ou CPF da pessoa cadastrada..."
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400 text-sm"
                 value={searchTerm}
                 onChange={(e) => {
@@ -141,19 +140,18 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
                 }}
                 onFocus={() => setShowPersonList(true)}
               />
-              
-              {/* Dropdown List */}
+
               {showPersonList && searchTerm && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-64 overflow-y-auto">
                   {filteredPeople.length > 0 ? (
-                    filteredPeople.map(person => (
+                    filteredPeople.map((person) => (
                       <button
                         key={person.id}
                         onClick={() => handleSelectPerson(person)}
                         className="w-full px-4 py-3 hover:bg-blue-50 transition-colors text-left border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                       >
-                        <img 
-                          src={person.avatar} 
+                        <img
+                          src={person.avatar}
                           alt={person.name}
                           className="w-8 h-8 rounded-full object-cover"
                         />
@@ -174,11 +172,10 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
                 </div>
               )}
 
-              {/* Selected Person Badge */}
               {selectedPerson && (
                 <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
-                  <img 
-                    src={selectedPerson.avatar} 
+                  <img
+                    src={selectedPerson.avatar}
                     alt={selectedPerson.name}
                     className="w-8 h-8 rounded-full object-cover"
                   />
@@ -201,9 +198,11 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
             </div>
           </div>
 
-          {/* Withdrawal DateTime (Automatic) */}
+          {/* Withdrawal DateTime */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Data/Hora de Retirada</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Data/Hora de Retirada
+            </label>
             <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100/50 rounded-lg border border-blue-200 flex items-center gap-3">
               <div className="p-2 bg-blue-600 rounded-lg">
                 <Calendar size={18} className="text-white" />
@@ -215,26 +214,29 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
             </div>
           </div>
 
-          {/* Expected Return DateTime (Optional) */}
+          {/* Expected Return DateTime */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Data/Hora Prevista de Devolução</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              Data/Hora Prevista de Devolução
+            </label>
             <div className="relative">
               <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none z-10" />
-              <input 
-                type="datetime-local" 
+              <input
+                type="datetime-local"
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm text-gray-600"
                 value={returnDate}
                 onChange={(e) => setReturnDate(e.target.value)}
-                placeholder="Selecione uma data opcional"
               />
             </div>
-            <p className="text-xs text-gray-500">Opcional - Quando você prevê que a chave será devolvida</p>
+            <p className="text-xs text-gray-500">
+              Opcional — deixe em branco se não houver prazo definido.
+            </p>
           </div>
 
           {/* Observations */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Observações</label>
-            <textarea 
+            <textarea
               className="w-full h-24 p-4 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none text-sm transition-all placeholder:text-gray-400"
               placeholder="Adicione informações relevantes sobre a entrega..."
               value={observations}
@@ -245,13 +247,13 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
 
         {/* Footer Actions */}
         <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50/50">
-          <button 
+          <button
             onClick={onClose}
             className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors active:scale-[0.98]"
           >
             Cancelar
           </button>
-          <button 
+          <button
             onClick={handleSubmit}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-blue-200 active:scale-[0.98] flex items-center justify-center gap-2"
           >
@@ -264,32 +266,42 @@ export function AssignKeyModal({ isOpen, onClose, onConfirm, keyData }: AssignKe
   );
 }
 
-function UserTypeOption({ selected, onClick, icon, title, subtitle }: { selected: boolean, onClick: () => void, icon: React.ReactNode, title: string, subtitle: string }) {
+function UserTypeOption({
+  selected,
+  onClick,
+  icon,
+  title,
+  subtitle,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "relative flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left",
-        selected 
-          ? "border-blue-600 bg-blue-50/50" 
-          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+        'relative flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left',
+        selected
+          ? 'border-blue-600 bg-blue-50/50'
+          : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
       )}
     >
-      {selected && (
+      {selected ? (
         <div className="absolute top-3 right-3 text-blue-600">
           <div className="w-4 h-4 rounded-full border-[3px] border-blue-600" />
         </div>
-      )}
-      {!selected && (
+      ) : (
         <div className="absolute top-3 right-3 text-gray-200">
           <div className="w-4 h-4 rounded-full border-2 border-gray-200" />
         </div>
       )}
-      
-      <div className={cn("mb-2", selected ? "text-blue-600" : "text-gray-400")}>
-        {icon}
-      </div>
-      <span className={cn("text-sm font-bold mb-0.5", selected ? "text-gray-900" : "text-gray-700")}>{title}</span>
+      <div className={cn('mb-2', selected ? 'text-blue-600' : 'text-gray-400')}>{icon}</div>
+      <span className={cn('text-sm font-bold mb-0.5', selected ? 'text-gray-900' : 'text-gray-700')}>
+        {title}
+      </span>
       <span className="text-[10px] text-gray-400 font-medium">{subtitle}</span>
     </button>
   );

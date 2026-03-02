@@ -27,6 +27,8 @@ export interface KeyData {
   allowedProfiles?: string[];
   observations?: string;
   borrowedAt?: string;
+  /** ID do empréstimo ativo — preenchido pela API quando status !== 'available' */
+  emprestimoId?: string;
 }
 
 export const MOCK_KEYS: KeyData[] = [
@@ -149,6 +151,8 @@ export interface PersonData {
   contact: string;
   area?: string;
   observations?: string;
+  /** ID do setor no backend — preenchido quando dado vem da API */
+  setorId?: number;
 }
 
 export const MOCK_PEOPLE: PersonData[] = [

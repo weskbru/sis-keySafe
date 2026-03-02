@@ -1,63 +1,87 @@
-import { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  ChevronLeft, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Search,
+  Filter,
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronLeft,
   ChevronRight,
-  X 
+  X,
 } from 'lucide-react';
 import { Sidebar } from '../modals/Sidebar';
-import { MOCK_PEOPLE, PersonData } from '../data/mock';
+import { PersonData } from '../data/mock';
 import { cn } from '../lib/utils';
 import { RegisterPersonModal } from '../modals/RegisterPersonModal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { pessoaService, toPessoaData } from '../services/pessoaService';
+import { setorService, ApiSetor } from '../services/setorService';
 
 interface AuthorizedPersonsPageProps {
-  onNavigate: (page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports') => void;
+  onNavigate: (
+    page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports'
+  ) => void;
   onLogout: () => void;
 }
 
 export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPersonsPageProps) {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [people, setPeople] = useState<PersonData[]>(MOCK_PEOPLE);
+  const [people, setPeople] = useState<PersonData[]>([]);
+  const [setores, setSetores] = useState<ApiSetor[]>([]);
   const [editingPerson, setEditingPerson] = useState<PersonData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  
-  // Confirmation modals state
+
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
     type: 'save-person' | 'edit-person' | 'delete-person' | null;
     data?: any;
   }>({ isOpen: false, type: null });
 
-  // Lógica de filtragem
-  const filteredPeople = people.filter(person => {
-    // Filtro por pesquisa
+  const loadPessoas = useCallback(async () => {
+    try {
+      const res = await pessoaService.list();
+      setPeople(res.data.map(toPessoaData));
+    } catch (err) {
+      console.error('Erro ao carregar pessoas:', err);
+    }
+  }, []);
+
+  const loadSetores = useCallback(async () => {
+    try {
+      const res = await setorService.list();
+      setSetores(res.data);
+    } catch (err) {
+      console.error('Erro ao carregar setores:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPessoas();
+    loadSetores();
+  }, [loadPessoas, loadSetores]);
+
+  const filteredPeople = people.filter((person) => {
     const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       person.name.toLowerCase().includes(searchLower) ||
       person.document.toLowerCase().includes(searchLower) ||
       person.contact.toLowerCase().includes(searchLower) ||
       (person.email && person.email.toLowerCase().includes(searchLower));
-
-    // Filtro por perfil
     const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(person.role);
-
     return matchesSearch && matchesRole;
   });
 
-  // Resetar página ao filtrar
   const [prevSearchTerm, setPrevSearchTerm] = useState('');
   const [prevSelectedRoles, setPrevSelectedRoles] = useState<string[]>([]);
 
-  if (searchTerm !== prevSearchTerm || JSON.stringify(selectedRoles) !== JSON.stringify(prevSelectedRoles)) {
+  if (
+    searchTerm !== prevSearchTerm ||
+    JSON.stringify(selectedRoles) !== JSON.stringify(prevSelectedRoles)
+  ) {
     setCurrentPage(1);
     setPrevSearchTerm(searchTerm);
     setPrevSelectedRoles(selectedRoles);
@@ -69,52 +93,49 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   const currentPeople = filteredPeople.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   const handleRegisterConfirm = (data: any) => {
     setConfirmationModal({
       isOpen: true,
       type: data.id ? 'edit-person' : 'save-person',
-      data
+      data,
     });
   };
 
-  const executeSavePerson = () => {
+  const executeSavePerson = async () => {
     if (!confirmationModal.data) return;
     const data = confirmationModal.data;
 
-    if (data.id) {
-      // Edit existing person
-      setPeople(prevPeople => prevPeople.map(p => p.id === data.id ? {
-        ...p,
-        name: data.name,
-        role: data.role,
-        document: data.document,
-        contact: data.phone,
-        area: data.area,
-        observations: data.observations,
-        avatar: data.avatar || p.avatar
-      } : p));
-    } else {
-      // Create new person
-      const newPerson: PersonData = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: data.name,
-        email: '',
-        avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
-        role: data.role,
-        document: data.document,
-        contact: data.phone,
-        area: data.area,
-        observations: data.observations
-      };
-      setPeople(prevPeople => [newPerson, ...prevPeople]);
+    const formData = new FormData();
+    formData.append('nome_completo', data.name);
+    formData.append('cpf', data.document);
+    formData.append('tipo_vinculo', data.role === 'Servidor' ? 'SERVIDOR' : 'PRESTADOR');
+    if (data.setorId) formData.append('setor', String(data.setorId));
+    formData.append('telefone', data.phone || '');
+    formData.append('observacao', data.observations || '');
+    if (data.avatarFile instanceof File) formData.append('foto', data.avatarFile);
+
+    try {
+      if (data.id) {
+        await pessoaService.update(parseInt(data.id, 10), formData);
+      } else {
+        await pessoaService.create(formData);
+      }
+      await loadPessoas();
+      setIsRegisterModalOpen(false);
+      setEditingPerson(null);
+    } catch (err: any) {
+      const errData = err?.response?.data;
+      if (errData?.cpf) {
+        alert('CPF já cadastrado no sistema.');
+      } else if (errData && typeof errData === 'object') {
+        alert(Object.values(errData).flat().join('\n'));
+      } else {
+        alert('Erro ao salvar pessoa.');
+      }
     }
-    setIsRegisterModalOpen(false);
-    setEditingPerson(null);
   };
 
   const handleEdit = (person: PersonData) => {
@@ -123,16 +144,21 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   };
 
   const handleDelete = (id: string) => {
-    setConfirmationModal({
-      isOpen: true,
-      type: 'delete-person',
-      data: { id }
-    });
+    setConfirmationModal({ isOpen: true, type: 'delete-person', data: { id } });
   };
 
-  const executeDeletePerson = () => {
+  const executeDeletePerson = async () => {
     if (!confirmationModal.data) return;
-    setPeople(prevPeople => prevPeople.filter(p => p.id !== confirmationModal.data.id));
+    try {
+      await pessoaService.destroy(parseInt(confirmationModal.data.id, 10));
+      await loadPessoas();
+    } catch (err: any) {
+      if (err?.response?.status === 409) {
+        alert('Esta pessoa possui empréstimos ativos e não pode ser removida.');
+      } else {
+        alert('Erro ao remover pessoa.');
+      }
+    }
   };
 
   const handleConfirmAction = () => {
@@ -154,28 +180,28 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
           title: 'Confirmar Cadastro',
           message: 'Deseja realmente cadastrar esta pessoa?',
           confirmText: 'Sim, Cadastrar',
-          type: 'success' as const
+          type: 'success' as const,
         };
       case 'edit-person':
         return {
           title: 'Confirmar Alterações',
           message: 'Deseja realmente salvar as alterações desta pessoa?',
           confirmText: 'Sim, Salvar',
-          type: 'success' as const
+          type: 'success' as const,
         };
       case 'delete-person':
         return {
           title: 'Confirmar Exclusão',
           message: 'Tem certeza que deseja remover esta pessoa? Esta ação não pode ser desfeita.',
           confirmText: 'Sim, Remover',
-          type: 'danger' as const
+          type: 'danger' as const,
         };
       default:
         return {
           title: 'Confirmar',
           message: 'Deseja continuar?',
           confirmText: 'Confirmar',
-          type: 'warning' as const
+          type: 'warning' as const,
         };
     }
   };
@@ -190,10 +216,9 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
       <Sidebar activePage="authorized-persons" onNavigate={onNavigate} onLogout={onLogout} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
         <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
           <h2 className="text-2xl font-bold text-gray-900">Pessoas Autorizadas</h2>
-          <button 
+          <button
             onClick={() => {
               setEditingPerson(null);
               setIsRegisterModalOpen(true);
@@ -205,23 +230,21 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
           </button>
         </header>
 
-        {/* Content Scroll Area */}
         <div className="flex-1 overflow-y-auto p-8">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            
             {/* Search and Filter Bar */}
             <div className="p-6 border-b border-gray-100 flex gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar por nome, CPF ou documento..." 
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, CPF ou contato..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                 />
               </div>
-              <button 
+              <button
                 onClick={() => setIsFilterModalOpen(true)}
                 className="px-6 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl flex items-center gap-2 font-medium transition-colors"
               >
@@ -241,8 +264,8 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
                 <div className="p-8 text-center">
                   <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                   <p className="text-gray-500 font-medium">
-                    {searchTerm || selectedRoles.length > 0 
-                      ? 'Nenhuma pessoa encontrada com os critérios de busca.' 
+                    {searchTerm || selectedRoles.length > 0
+                      ? 'Nenhuma pessoa encontrada com os critérios de busca.'
                       : 'Nenhuma pessoa cadastrada.'}
                   </p>
                 </div>
@@ -260,19 +283,26 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {currentPeople.map((person) => (
-                      <tr key={person.id} className="hover:bg-gray-50/50 transition-colors group">
+                      <tr
+                        key={person.id}
+                        className="hover:bg-gray-50/50 transition-colors group"
+                      >
                         <td className="px-6 py-4">
-                          <img 
-                            src={person.avatar} 
-                            alt={person.name} 
+                          <img
+                            src={person.avatar}
+                            alt={person.name}
                             className="w-10 h-10 rounded-full object-cover border border-gray-200"
                           />
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
                             <span className="font-bold text-gray-900">{person.name}</span>
-                            {person.email && <span className="text-xs text-gray-500">{person.email}</span>}
-                            {person.area && <span className="text-xs text-blue-600 font-medium">{person.area}</span>}
+                            {person.email && (
+                              <span className="text-xs text-gray-500">{person.email}</span>
+                            )}
+                            {person.area && (
+                              <span className="text-xs text-blue-600 font-medium">{person.area}</span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -281,19 +311,17 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
                         <td className="px-6 py-4 text-gray-600 font-mono text-sm">
                           {person.document}
                         </td>
-                        <td className="px-6 py-4 text-gray-600 text-sm">
-                          {person.contact}
-                        </td>
+                        <td className="px-6 py-4 text-gray-600 text-sm">{person.contact}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center justify-center gap-2">
-                            <button 
+                            <button
                               onClick={() => handleEdit(person)}
                               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Editar"
                             >
                               <Edit2 size={18} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDelete(person.id)}
                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                               title="Excluir"
@@ -313,33 +341,40 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
             {currentPeople.length > 0 && (
               <div className="p-4 border-t border-gray-100 bg-gray-50/30 flex items-center justify-between">
                 <span className="text-sm text-gray-500">
-                  Exibindo <span className="font-bold text-gray-900">{filteredPeople.length === 0 ? 0 : startIndex + 1}-{Math.min(endIndex, filteredPeople.length)}</span> de <span className="font-bold text-gray-900">{filteredPeople.length}</span> registros
+                  Exibindo{' '}
+                  <span className="font-bold text-gray-900">
+                    {filteredPeople.length === 0 ? 0 : startIndex + 1}-
+                    {Math.min(endIndex, filteredPeople.length)}
+                  </span>{' '}
+                  de{' '}
+                  <span className="font-bold text-gray-900">{filteredPeople.length}</span>{' '}
+                  registros
                 </span>
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  
+
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
                       key={page}
                       onClick={() => handlePageChange(page)}
                       className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-lg border font-medium transition-colors",
+                        'w-8 h-8 flex items-center justify-center rounded-lg border font-medium transition-colors',
                         currentPage === page
-                          ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200"
-                          : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+                          : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
                       )}
                     >
                       {page}
                     </button>
                   ))}
 
-                  <button 
+                  <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -349,17 +384,17 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </main>
 
       {isRegisterModalOpen && (
-        <RegisterPersonModal 
+        <RegisterPersonModal
           isOpen={isRegisterModalOpen}
           onClose={handleCloseModal}
           onConfirm={handleRegisterConfirm}
           initialData={editingPerson}
+          setores={setores}
         />
       )}
 
@@ -369,16 +404,13 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
           onClose={() => setIsFilterModalOpen(false)}
           selectedRoles={selectedRoles}
           onRoleChange={(role) => {
-            setSelectedRoles(prev =>
-              prev.includes(role)
-                ? prev.filter(r => r !== role)
-                : [...prev, role]
+            setSelectedRoles((prev) =>
+              prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
             );
           }}
         />
       )}
 
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         onClose={() => setConfirmationModal({ isOpen: false, type: null })}
@@ -389,12 +421,12 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
   );
 }
 
-function FilterModal({ 
-  isOpen, 
-  onClose, 
-  selectedRoles, 
-  onRoleChange 
-}: { 
+function FilterModal({
+  isOpen,
+  onClose,
+  selectedRoles,
+  onRoleChange,
+}: {
   isOpen: boolean;
   onClose: () => void;
   selectedRoles: string[];
@@ -407,10 +439,9 @@ function FilterModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 scale-100">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Filtrar por Perfil</h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
           >
@@ -419,44 +450,38 @@ function FilterModal({
         </div>
 
         <div className="p-6 space-y-3">
-          {roles.map(role => (
-            <label key={role} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-              <input 
-                type="checkbox" 
+          {roles.map((role) => (
+            <label
+              key={role}
+              className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+            >
+              <input
+                type="checkbox"
                 checked={selectedRoles.includes(role)}
                 onChange={() => onRoleChange(role)}
                 className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
               />
               <span className="text-sm font-medium text-gray-700 flex-1">{role}</span>
               {selectedRoles.includes(role) && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">Selecionado</span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">
+                  Selecionado
+                </span>
               )}
             </label>
           ))}
         </div>
 
-        {/* Footer Actions */}
         <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50/50">
-          {selectedRoles.length > 0 && (
-            <button 
-              onClick={onClose}
-              className="flex-1 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-            >
-              Aplicar Filtros ({selectedRoles.length})
-            </button>
-          )}
-          <button 
-            onClick={() => {
-              onClose();
-            }}
+          <button
+            onClick={onClose}
             className={cn(
-              "flex-1 font-medium py-2.5 rounded-lg transition-colors text-sm",
+              'flex-1 font-medium py-2.5 rounded-lg transition-colors text-sm',
               selectedRoles.length > 0
-                ? "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
             )}
           >
-            {selectedRoles.length > 0 ? 'Fechar' : 'Fechar'}
+            {selectedRoles.length > 0 ? `Aplicar Filtros (${selectedRoles.length})` : 'Fechar'}
           </button>
         </div>
       </div>
@@ -466,12 +491,12 @@ function FilterModal({
 
 function RoleBadge({ role }: { role: PersonData['role'] }) {
   const styles = {
-    'Servidor': 'bg-blue-100 text-blue-700',
-    'Prestador': 'bg-orange-100 text-orange-700',
+    Servidor: 'bg-blue-100 text-blue-700',
+    Prestador: 'bg-orange-100 text-orange-700',
   };
 
   return (
-    <span className={cn("px-3 py-1 rounded-full text-xs font-bold", styles[role])}>
+    <span className={cn('px-3 py-1 rounded-full text-xs font-bold', styles[role])}>
       {role}
     </span>
   );

@@ -1,89 +1,52 @@
 import React, { useState, useRef } from 'react';
-import { X, GraduationCap, UserCog, CheckCircle2, Upload, Camera, User } from 'lucide-react';
+import { X, GraduationCap, UserCog, CheckCircle2, Camera, User } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { PersonData } from '../data/mock';
+import type { ApiSetor } from '../services/setorService';
 
 interface RegisterPersonModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (data: any) => void;
   initialData?: PersonData | null;
+  setores: ApiSetor[];
 }
 
 type Role = 'Servidor' | 'Prestador';
 
-const AREA_OPTIONS = [
-  'ACI - Assessoria de Cooperacao Internacional',
-  'ARI - Assessoria de Relacoes Institucionais e Comunicacao',
-  'AUDIN - Auditoria Interna',
-  'COAD - Coordenacao de Administracao',
-  'CCS - Coordenacao de Comunicacao Social',
-  'CDT - Coordenacao de Desenvolvimento de Competencias e Tecnologia',
-  'CEG - Coordenacao de Estruturacao e Governanca',
-  'CEN - Coordenacao de Estudo Estrategicos e Novos Negocios',
-  'CGP - Coordenacao de Gestao de Pessoas',
-  'CLC - Coordenacao de Licenciamento, Normas e Comercializacao',
-  'CMA - Coordenacao de Monitoramento e Avaliacao',
-  'COF - Coordenacao de Orcamento e Financas',
-  'OUV - Coordenacao de Ouvidoria e Acesso a Informacao',
-  'CPP - Coordenacao de Politicas e Programas',
-  'CRI - Coordenacao de Relacoes Institucionais',
-  'CSA - Coordenacao de Satelites e Aplicacoes',
-  'CSS - Coordenacao de Segmento Solo',
-  'CTI - Coordenacao de Tecnologia da Informacao',
-  'CVL - Coordenacao de Veiculos Lancadores',
-  'DGEP - Diretoria de Gestao de Portfolio',
-  'DGSE - Diretoria de Governanca do Setor Espacial',
-  'DIEN - Diretoria de Inteligencia Estrategica e Novos Negocios',
-  'DPOA - Diretoria de Planejamento, Orcamento e Administracao',
-  'DIAP - Divisao de Almoxarifado e Patrimonio',
-  'DAP - Divisao de Analises e Pareceres',
-  'DAI - Divisao de Apoio Institucional',
-  'DCAD - Divisao de Cadastro',
-  'DCON - Divisao de Contabilidade',
-  'DCONT - Divisao de Contratacoes',
-  'DEOF - Divisao de Execucao Orcamentaria e Financeira',
-  'DSEG - Divisao de Infraestrutura e Seguranca',
-  'DPAG - Divisao de Pagamento',
-  'DIPA - Divisao de Planejamento de Aquisicoes',
-  'DPSC - Divisao de Projetos e Solucoes Corporativas',
-  'DSG - Divisao de Servicos Gerais',
-  'DEDH - Divisao Estrategica de Desenvolvimento Humano',
-  'GAB - Gabinete',
-  'PRE - Presidencia',
-  'PF - Procuradoria Federal',
-  'PROT - Secao de Protocolo'
-];
-
-export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }: RegisterPersonModalProps) {
+export function RegisterPersonModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  initialData,
+  setores,
+}: RegisterPersonModalProps) {
   if (!isOpen) return null;
 
   const [name, setName] = useState(initialData?.name || '');
   const [role, setRole] = useState<Role>(initialData?.role || 'Servidor');
   const [document, setDocument] = useState(initialData?.document || '');
   const [phone, setPhone] = useState(initialData?.contact || '');
-  const [area, setArea] = useState(initialData?.area || '');
   const [areaQuery, setAreaQuery] = useState(initialData?.area || '');
+  const [selectedSetorId, setSelectedSetorId] = useState<number | null>(
+    initialData?.setorId ?? null
+  );
   const [showAreaList, setShowAreaList] = useState(false);
   const [observations, setObservations] = useState(initialData?.observations || '');
   const [avatarPreview, setAvatarPreview] = useState<string>(initialData?.avatar || '');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredAreas = AREA_OPTIONS.filter((option) =>
-    option.toLowerCase().includes(areaQuery.toLowerCase())
-  ).slice(0, 2);
+  const filteredSetores = setores
+    .filter((s) => s.nome.toLowerCase().includes(areaQuery.toLowerCase()))
+    .slice(0, 5);
 
   const formatCpf = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     const parts = digits.match(/(\d{0,3})(\d{0,3})(\d{0,3})(\d{0,2})/);
     if (!parts) return digits;
     const [, p1, p2, p3, p4] = parts;
-    return [
-      p1,
-      p2 ? `.${p2}` : '',
-      p3 ? `.${p3}` : '',
-      p4 ? `-${p4}` : ''
-    ].join('');
+    return [p1, p2 ? `.${p2}` : '', p3 ? `.${p3}` : '', p4 ? `-${p4}` : ''].join('');
   };
 
   const formatPhone = (value: string) => {
@@ -91,47 +54,41 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
     const parts = digits.match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
     if (!parts) return digits;
     const [, p1, p2, p3] = parts;
-    return [
-      p1 ? `(${p1}) ` : '',
-      p2,
-      p3 ? `-${p3}` : ''
-    ].join('');
+    return [p1 ? `(${p1}) ` : '', p2, p3 ? `-${p3}` : ''].join('');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Validar tipo de arquivo
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione apenas arquivos de imagem.');
-        return;
-      }
-      
-      // Validar tamanho (máximo 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('A imagem deve ter no máximo 5MB.');
-        return;
-      }
-
-      // Criar preview da imagem
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione apenas arquivos de imagem.');
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveAvatar = () => {
     setAvatarPreview('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setAvatarFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSelectSetor = (setor: ApiSetor) => {
+    setAreaQuery(setor.nome);
+    setSelectedSetorId(setor.id);
+    setShowAreaList(false);
   };
 
   const handleSubmit = () => {
-    if (!name.trim() || !document.trim() || !phone.trim() || (role && !area.trim())) {
-      alert('Preencha todos os campos obrigatorios.');
+    if (!name.trim() || !document.trim() || !phone.trim()) {
+      alert('Preencha todos os campos obrigatórios.');
       return;
     }
     onConfirm({
@@ -140,9 +97,13 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
       role,
       document,
       phone,
-      area: area || undefined,
+      area: areaQuery || undefined,
+      setorId: selectedSetorId,
       observations,
-      avatar: avatarPreview || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+      avatarFile,
+      avatar:
+        avatarPreview ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4f46e5&color=ffffff&size=80`,
     });
     onClose();
   };
@@ -155,7 +116,7 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
           <h2 className="text-xl font-bold text-gray-900">
             {initialData ? 'Editar Pessoa Autorizada' : 'Cadastrar Pessoa Autorizada'}
           </h2>
-          <button 
+          <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
           >
@@ -163,17 +124,16 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
           </button>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Avatar Upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Foto de Perfil</label>
             <div className="flex items-center gap-6">
-              {/* Avatar Preview */}
               <div className="relative">
                 {avatarPreview ? (
                   <div className="relative group">
-                    <img 
-                      src={avatarPreview} 
+                    <img
+                      src={avatarPreview}
                       alt="Preview"
                       className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
                     />
@@ -190,8 +150,6 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
                   </div>
                 )}
               </div>
-
-              {/* Upload Button */}
               <div className="flex-1">
                 <input
                   ref={fileInputRef}
@@ -216,13 +174,12 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
           {/* Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Nome Completo</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Ex: Maria José da Silva"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
             />
           </div>
 
@@ -230,14 +187,14 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Perfil</label>
             <div className="grid grid-cols-2 gap-4">
-              <RoleOption 
-                selected={role === 'Servidor'} 
+              <RoleOption
+                selected={role === 'Servidor'}
                 onClick={() => setRole('Servidor')}
                 icon={<GraduationCap size={24} />}
                 label="SERVIDOR"
               />
-              <RoleOption 
-                selected={role === 'Prestador'} 
+              <RoleOption
+                selected={role === 'Prestador'}
                 onClick={() => setRole('Prestador')}
                 icon={<UserCog size={24} />}
                 label="PRESTADOR"
@@ -245,82 +202,81 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
             </div>
           </div>
 
-          {/* Area Field (For Servidor and Prestador) */}
-          {(role === 'Servidor' || role === 'Prestador') && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              <label className="text-sm font-medium text-gray-700">Área/Setor</label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Digite para buscar..."
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
-                  value={areaQuery}
-                  onChange={(e) => {
-                    setAreaQuery(e.target.value);
-                    setArea(e.target.value);
-                    setShowAreaList(true);
-                  }}
-                  onFocus={() => setShowAreaList(true)}
-                  required
-                />
-                {showAreaList && areaQuery && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-32 overflow-y-auto">
-                    {filteredAreas.length > 0 ? (
-                      filteredAreas.map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => {
-                            setArea(option);
-                            setAreaQuery(option);
-                            setShowAreaList(false);
-                          }}
-                          className="w-full px-4 py-2.5 hover:bg-blue-50 transition-colors text-left text-sm text-gray-700"
-                        >
-                          {option}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2.5 text-sm text-gray-500">Nenhum resultado</div>
-                    )}
-                  </div>
-                )}
-              </div>
+          {/* Area/Setor */}
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <label className="text-sm font-medium text-gray-700">
+              Área/Setor
+              {role === 'Servidor' && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Digite para buscar o setor..."
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
+                value={areaQuery}
+                onChange={(e) => {
+                  setAreaQuery(e.target.value);
+                  setSelectedSetorId(null);
+                  setShowAreaList(true);
+                }}
+                onFocus={() => setShowAreaList(true)}
+              />
+              {showAreaList && areaQuery && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+                  {filteredSetores.length > 0 ? (
+                    filteredSetores.map((setor) => (
+                      <button
+                        key={setor.id}
+                        type="button"
+                        onClick={() => handleSelectSetor(setor)}
+                        className="w-full px-4 py-2.5 hover:bg-blue-50 transition-colors text-left text-sm text-gray-700"
+                      >
+                        {setor.nome}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2.5 text-sm text-gray-500">Nenhum resultado</div>
+                  )}
+                </div>
+              )}
+              {selectedSetorId && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium pointer-events-none">
+                  ✓ Selecionado
+                </span>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Document and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Documento (RG ou CPF)</label>
-              <input 
-                type="text" 
+              <label className="text-sm font-medium text-gray-700">CPF</label>
+              <input
+                type="text"
                 placeholder="000.000.000-00"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
                 value={document}
                 onChange={(e) => setDocument(formatCpf(e.target.value))}
-                required
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Telefone de Contato</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="(00) 00000-0000"
                 className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
                 value={phone}
                 onChange={(e) => setPhone(formatPhone(e.target.value))}
-                required
               />
             </div>
           </div>
 
           {/* Observations */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Observações (Empresa, Setor, etc)</label>
-            <textarea 
+            <label className="text-sm font-medium text-gray-700">Observações</label>
+            <textarea
               className="w-full h-24 p-4 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none text-sm transition-all placeholder:text-gray-400"
-              placeholder="Informações adicionais relevantes..."
+              placeholder="Informações adicionais relevantes (empresa, etc)..."
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
             />
@@ -329,13 +285,13 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
 
         {/* Footer Actions */}
         <div className="p-6 border-t border-gray-100 flex gap-3 bg-gray-50/50">
-          <button 
+          <button
             onClick={handleSubmit}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-blue-200 active:scale-[0.98]"
           >
             {initialData ? 'Salvar Alterações' : 'Salvar Cadastro'}
           </button>
-          <button 
+          <button
             onClick={onClose}
             className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-3 rounded-xl transition-colors active:scale-[0.98]"
           >
@@ -347,15 +303,25 @@ export function RegisterPersonModal({ isOpen, onClose, onConfirm, initialData }:
   );
 }
 
-function RoleOption({ selected, onClick, icon, label }: { selected: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+function RoleOption({
+  selected,
+  onClick,
+  icon,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all h-24 gap-2",
-        selected 
-          ? "border-blue-600 bg-blue-50/50 text-blue-700" 
-          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-500"
+        'relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all h-24 gap-2',
+        selected
+          ? 'border-blue-600 bg-blue-50/50 text-blue-700'
+          : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-gray-500'
       )}
     >
       {selected && (
@@ -363,7 +329,7 @@ function RoleOption({ selected, onClick, icon, label }: { selected: boolean, onC
           <CheckCircle2 size={16} fill="currentColor" className="text-white" />
         </div>
       )}
-      <div className={cn("transition-colors", selected ? "text-blue-600" : "text-gray-400")}>
+      <div className={cn('transition-colors', selected ? 'text-blue-600' : 'text-gray-400')}>
         {icon}
       </div>
       <span className="text-xs font-bold uppercase tracking-wide">{label}</span>

@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -17,9 +15,11 @@ class ChaveResumoSerializer(serializers.ModelSerializer):
 
 
 class PessoaResumoSerializer(serializers.ModelSerializer):
+    setor_nome = serializers.CharField(source='setor.nome', read_only=True)
+
     class Meta:
         model = Pessoa
-        fields = ['id', 'nome_completo', 'cpf', 'tipo_vinculo']
+        fields = ['id', 'nome_completo', 'cpf', 'tipo_vinculo', 'setor_nome']
 
 
 class EmprestimoSerializer(serializers.ModelSerializer):
@@ -67,41 +67,6 @@ class EmprestimoCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        pessoa = data.get('pessoa')
-        data_prevista = data.get('data_prevista_devolucao')
-
-        if pessoa is not None:
-            tz_local = timezone.get_current_timezone()
-            agora = timezone.now().astimezone(tz_local)
-
-            if pessoa.tipo_vinculo == 'PRESTADOR':
-                if not data_prevista:
-                    raise serializers.ValidationError({
-                        'data_prevista_devolucao': (
-                            'Prestadores devem informar a data prevista de devolução.'
-                        )
-                    })
-                fim_hoje = agora.replace(hour=23, minute=59, second=59, microsecond=0)
-                if data_prevista.astimezone(tz_local) > fim_hoje:
-                    raise serializers.ValidationError({
-                        'data_prevista_devolucao': (
-                            'Prestadores devem devolver a chave no mesmo dia da retirada '
-                            f'(até {fim_hoje.strftime("%d/%m/%Y 23:59")}).'
-                        )
-                    })
-
-            elif pessoa.tipo_vinculo == 'SERVIDOR' and data_prevista:
-                fim_amanha = (agora + timedelta(days=1)).replace(
-                    hour=23, minute=59, second=59, microsecond=0
-                )
-                if data_prevista.astimezone(tz_local) > fim_amanha:
-                    raise serializers.ValidationError({
-                        'data_prevista_devolucao': (
-                            'Servidores devem devolver a chave até o final do próximo dia útil '
-                            f'(até {fim_amanha.strftime("%d/%m/%Y 23:59")}).'
-                        )
-                    })
-
         return data
 
     def create(self, validated_data):

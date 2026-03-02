@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { setLogoutHandler } from '../services/api';
-import { authService, type LoginCredentials } from '../services/authService';
+import { authService, type LoginCredentials, type CurrentUser } from '../services/authService';
 
 interface AuthContextValue {
   isAuthenticated: boolean;
+  currentUser: CurrentUser | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
 }
@@ -11,20 +12,26 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Inicializa a partir do localStorage para persistir sessão entre recargas
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     authService.isAuthenticated()
   );
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   const logout = useCallback(() => {
     authService.logout();
     setIsAuthenticated(false);
+    setCurrentUser(null);
   }, []);
 
-  // Registra o logout no interceptor axios para tratar token expirado (401)
   useEffect(() => {
     setLogoutHandler(logout);
   }, [logout]);
+
+  useEffect(() => {
+    if (isAuthenticated && !currentUser) {
+      authService.me().then(setCurrentUser).catch(() => logout());
+    }
+  }, [isAuthenticated, currentUser, logout]);
 
   async function login(credentials: LoginCredentials): Promise<void> {
     await authService.login(credentials);
@@ -32,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, currentUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
