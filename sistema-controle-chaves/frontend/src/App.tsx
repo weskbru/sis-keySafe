@@ -10,8 +10,9 @@ import { Dashboard } from './pages/Dashboard';
 import { ReportsPage } from './pages/ReportsPage';
 import { AuthorizedPersonsPage } from './pages/AuthorizedPersonsPage';
 import { KeyReportsPage } from './pages/KeyReportsPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
 
-type Page = 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports';
+type Page = 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports' | 'admin-users';
 
 function AppRoutes() {
   const { isAuthenticated, logout } = useAuth();
@@ -19,6 +20,10 @@ function AppRoutes() {
 
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  if (currentPage === 'admin-users') {
+    return <AdminUsersPage onNavigate={setCurrentPage} onLogout={logout} />;
   }
 
   if (currentPage === 'key-reports') {

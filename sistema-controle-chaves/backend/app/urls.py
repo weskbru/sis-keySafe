@@ -1,5 +1,6 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
-from app.views import SetorViewSet, PessoaViewSet, ChaveViewSet, EmprestimoViewSet, AdminUserViewSet
+from app.views import SetorViewSet, PessoaViewSet, ChaveViewSet, EmprestimoViewSet, AdminUserViewSet, MeView
 
 router = DefaultRouter()
 router.register('setores', SetorViewSet, basename='setor')
@@ -8,4 +9,6 @@ router.register('chaves', ChaveViewSet, basename='chave')
 router.register('emprestimos', EmprestimoViewSet, basename='emprestimo')
 router.register('admin-users', AdminUserViewSet, basename='admin-user')
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path('me/', MeView.as_view(), name='me'),
+]

@@ -15,6 +15,7 @@ class Chave(models.Model):
     permitir_servidor = models.BooleanField(default=True)
     permitir_prestador = models.BooleanField(default=True)
     ativo = models.BooleanField(default=True)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True, default=None)
 
     class Meta:
         db_table = 'chave'
