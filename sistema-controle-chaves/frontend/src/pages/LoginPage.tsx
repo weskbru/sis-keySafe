@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Eye, EyeOff, Lock } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export function LoginPage() {
@@ -36,8 +36,8 @@ export function LoginPage() {
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 z-10 mx-4">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8 text-blue-600" />
+          <div className="w-16 h-16 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center mb-4 overflow-hidden">
+            <img src="/images/chave.png" alt="Logo Sistema" className="w-12 h-12 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Controle de Chaves</h1>
           <p className="text-sm text-gray-500 mt-1">Acesso Restrito ao Administrador</p>
@@ -103,7 +103,7 @@ export function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
           <p className="text-xs text-gray-400">
-            © 2024 KeySafe Systems. Todos os direitos reservados.
+            © 2026 Agência Espacial Brasileira
           </p>
         </div>
       </div>
