@@ -1,5 +1,4 @@
 from django.db.models import Prefetch
-from django.db.models.deletion import RestrictedError
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -20,6 +19,9 @@ class ChaveViewSet(viewsets.ModelViewSet):
             to_attr='_emprestimos_ativos_cache',
         )
         qs = Chave.objects.prefetch_related(emprestimos_ativos).order_by('id')
+
+        # Oculta chaves soft-deletadas (deleted_at preenchido)
+        qs = qs.filter(deleted_at__isnull=True)
 
         status_param = self.request.query_params.get('status')
         ativo = self.request.query_params.get('ativo')
@@ -43,11 +45,15 @@ class ChaveViewSet(viewsets.ModelViewSet):
         return qs
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except RestrictedError:
+        chave = self.get_object()
+        if chave.status == 'EMPRESTADA':
             return Response(
-                {'detail': 'Não é possível excluir esta chave pois ela possui empréstimos '
-                           'associados. Encerre todos os empréstimos antes de excluí-la.'},
+                {'detail': 'Não é possível excluir uma chave que está emprestada. '
+                           'Registre a devolução antes de excluí-la.'},
                 status=status.HTTP_409_CONFLICT,
             )
+        # Soft delete: marca como excluída e inativa, permanece no banco por 90 dias
+        chave.deleted_at = timezone.now()
+        chave.ativo = False
+        chave.save(update_fields=['deleted_at', 'ativo'])
+        return Response(status=status.HTTP_204_NO_CONTENT)

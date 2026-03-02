@@ -48,7 +48,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop('password')
-        validated_data.setdefault('is_staff', True)
+        validated_data['is_staff'] = True
+        validated_data['is_active'] = True
         user = User(**validated_data)
         user.set_password(password)
         user.save()

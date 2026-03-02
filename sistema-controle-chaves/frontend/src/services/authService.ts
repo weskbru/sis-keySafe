@@ -5,6 +5,14 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface CurrentUser {
+  id: number;
+  username: string;
+  full_name: string;
+  email: string;
+  is_superuser: boolean;
+}
+
 const KEYS = {
   access: 'access_token',
   refresh: 'refresh_token',
@@ -27,5 +35,10 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!localStorage.getItem(KEYS.access);
+  },
+
+  async me(): Promise<CurrentUser> {
+    const { data } = await api.get<CurrentUser>('/api/me/');
+    return data;
   },
 };

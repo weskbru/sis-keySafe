@@ -15,3 +15,8 @@ class PessoaViewSet(viewsets.ModelViewSet):
         if ativo is not None:
             qs = qs.filter(ativo=ativo.lower() == 'true')
         return qs
+
+    def perform_create(self, serializer):
+        # BooleanField via multipart/form-data sem o campo = False (comportamento HTML checkbox).
+        # Toda pessoa criada deve começar ativa; desativação é feita explicitamente via PATCH.
+        serializer.save(ativo=True)
