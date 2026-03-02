@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   Search, 
   Bell, 
-  Key, 
   Sparkles,
   Download
 } from 'lucide-react';
@@ -53,7 +52,7 @@ export function ReportsPage({ onNavigate, onLogout }: ReportsPageProps) {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <ReportCard 
-                icon={<Key className="w-6 h-6 text-blue-600" />}
+                icon={<img src="/images/chave.png" alt="Ícone chave" className="w-6 h-6 object-contain" />}
                 title="Relatório de Chaves"
                 description="Histórico de posses, temporalidade e registros de devolução."
                 iconBg="bg-blue-50"
@@ -64,7 +63,7 @@ export function ReportsPage({ onNavigate, onLogout }: ReportsPageProps) {
             {/* Bottom Banner */}
             <div className="bg-blue-50 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 border border-blue-100">
               <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200 flex-shrink-0">
+                <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center shadow-lg shadow-gray-200 flex-shrink-0">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <div>

@@ -4,7 +4,6 @@ import {
   Bell, 
   HelpCircle, 
   Filter, 
-  Key, 
   Clock, 
   CheckCircle2, 
   AlertCircle,
@@ -28,7 +27,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
-  const [selectedKeyId, setSelectedKeyId] = useState<string | null>('08');
+  const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProfile, setFilterProfile] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -62,9 +61,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
     const matchesProfile = 
       filterProfile === 'all' || 
       (filterProfile === 'Servidor' && key.holder?.role === 'Servidor') ||
-      (filterProfile === 'Prestador' && key.holder?.role === 'Prestador') ||
-      (filterProfile === 'Visitante' && key.holder?.role === 'Visitante') ||
-      (filterProfile === 'available' && !key.holder);
+      (filterProfile === 'Prestador' && key.holder?.role === 'Prestador');
     
     // Status filter
     const matchesStatus = 
@@ -304,19 +301,23 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-8">
-            <h2 className="text-xl font-bold text-gray-900">Dashboard Principal</h2>
-            <div className="flex items-center gap-4 text-sm">
-              <StatusLegend color="bg-emerald-500" label="Disponível" />
-              <StatusLegend color="bg-amber-500" label="Emprestado" />
-              <StatusLegend color="bg-red-500" label="Atrasado" />
+        <header className="bg-white border-b border-gray-100 px-8 py-6 flex items-center justify-between flex-shrink-0 shadow-sm">
+          <div className="flex items-center gap-12">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-950 tracking-tight">Dashboard Principal</h2>
+              <p className="text-xs text-gray-500 mt-1">Gestão e controle de chaves</p>
+            </div>
+            <div className="h-12 w-px bg-gray-100"></div>
+            <div className="flex items-center gap-6 text-sm">
+              <StatusLegend icon={<CheckCircle2 size={16} />} color="bg-emerald-500" label="Disponível" />
+              <StatusLegend icon={<Clock size={16} />} color="bg-amber-500" label="Emprestado" />
+              <StatusLegend icon={<AlertCircle size={16} />} color="bg-red-500" label="Atrasado" />
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsRegisterKeyModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors shadow-sm shadow-blue-200 text-sm"
+              className="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2.5 transition-all shadow-md shadow-blue-200/50 text-sm hover:shadow-lg hover:shadow-blue-200"
             >
               <Plus size={18} />
               Cadastrar Nova Chave
@@ -378,10 +379,8 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 className="px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 outline-none focus:border-blue-500 shadow-sm cursor-pointer"
               >
                 <option value="all">Todos os Perfis</option>
-                <option value="available">Sem Portador</option>
                 <option value="Servidor">Servidor</option>
                 <option value="Prestador">Prestador</option>
-                <option value="Visitante">Visitante</option>
               </select>
               <select 
                 value={filterStatus} 
@@ -408,7 +407,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           </div>
 
           {/* Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-8">
+          <div className="grid [grid-template-columns:repeat(auto-fill,minmax(220px,220px))] justify-start gap-x-2 gap-y-3 pb-8">
             {filteredKeys.map((keyItem) => (
               <KeyCard 
                 key={keyItem.id} 
@@ -437,8 +436,8 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           <div className="flex-1 overflow-y-auto p-6 space-y-8">
             {/* Header Info */}
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0 text-blue-600">
-                <Key size={32} />
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <img src="/images/key-icon_34404.png" alt="Ícone chave" className="w-10 h-10 object-contain" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{selectedKey.name}</h2>
@@ -581,7 +580,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
               >
                 <div className="bg-white/20 p-1 rounded">
-                  <Key size={16} />
+                  <img src="/images/key-icon_34404.png" alt="Ícone chave" className="w-4 h-4 object-contain" />
                 </div>
                 Entregar Chave
               </button>
@@ -654,11 +653,14 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
 // Subcomponents
 
-function StatusLegend({ color, label }: { color: string, label: string }) {
+function StatusLegend({ icon, color, label }: { icon: React.ReactNode, color: string, label: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className={cn("w-2.5 h-2.5 rounded-full", color)} />
-      <span className="text-gray-600 font-medium">{label}</span>
+    <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+      <span className={cn("w-2.5 h-2.5 rounded-full shadow-sm", color)} />
+      <div className="flex items-center gap-1.5 text-gray-700 font-medium">
+        <span className="text-gray-400">{icon}</span>
+        <span>{label}</span>
+      </div>
     </div>
   );
 }
@@ -674,31 +676,42 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
     <div 
       onClick={onClick}
       className={cn(
-        "bg-white p-5 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden",
+        "bg-white p-3 rounded-xl border transition-all cursor-pointer group relative overflow-hidden flex flex-col aspect-[3/4] w-full max-w-[220px] mx-auto",
         isSelected 
-          ? "border-blue-500 ring-2 ring-blue-100 shadow-lg" 
-          : "border-gray-100 hover:border-blue-200 hover:shadow-md"
+          ? "border-blue-500 ring-2 ring-blue-100 shadow-md" 
+          : "border-gray-200 hover:border-blue-200 hover:shadow-sm"
       )}
     >
-      {/* Status Icon Background */}
-      <div className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors",
-        data.status === 'available' && "bg-emerald-50 text-emerald-500",
-        data.status === 'borrowed' && "bg-amber-50 text-amber-500",
-        data.status === 'overdue' && "bg-red-50 text-red-500",
-      )}>
-        <Key size={24} />
-      </div>
+      <div className="flex-1 flex flex-col justify-center">
+        {/* Status Icon Background */}
+        <div className="relative mx-auto mb-4">
+          <div className={cn(
+            "w-20 h-20 rounded-xl flex items-center justify-center transition-all border",
+            data.status === 'available' && "bg-emerald-50 border-emerald-200 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]",
+            data.status === 'borrowed' && "bg-amber-50 border-amber-200 shadow-[0_0_0_3px_rgba(245,158,11,0.12)]",
+            data.status === 'overdue' && "bg-red-50 border-red-200 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]",
+          )}>
+            <img src="/images/key-icon_34404.png" alt="Chave" className="w-16 h-16 object-contain" />
+          </div>
 
-      <div className="flex justify-between items-start mb-1">
-        <h3 className="font-bold text-gray-900 text-lg">{data.name} -</h3>
+          <span className={cn(
+            "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white",
+            data.status === 'available' && "bg-emerald-500",
+            data.status === 'borrowed' && "bg-amber-500",
+            data.status === 'overdue' && "bg-red-500",
+          )} />
+        </div>
+
+        <div className="mb-1 text-center">
+          <h3 className="font-bold text-gray-900 text-sm leading-tight">{data.name} -</h3>
+        </div>
+        <h3 className="font-bold text-gray-900 text-sm leading-tight mb-2 text-center">{data.location}</h3>
       </div>
-      <h3 className="font-bold text-gray-900 text-lg mb-4">{data.location}</h3>
 
       {/* Footer Info */}
-      <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
+      <div className="pt-3 border-t border-gray-100 flex items-center justify-between mt-auto">
         {data.status === 'available' ? (
-          <div className="text-xs text-gray-400 italic">
+          <div className="text-[11px] text-gray-400 italic leading-tight">
             <p>Último uso:</p>
             <p>{data.lastUsed || "—"}</p>
           </div>
@@ -709,10 +722,10 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
                 <img 
                   src={data.holder.avatar} 
                   alt={data.holder.name}
-                  className="w-6 h-6 rounded-full object-cover"
+                  className="w-5 h-5 rounded-full object-cover"
                 />
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-gray-700">{data.holder.name}</span>
+                  <span className="text-[11px] font-semibold text-gray-700 leading-tight">{data.holder.name}</span>
                   {data.status === 'overdue' && (
                     <span className="text-[10px] text-red-500 font-bold flex items-center gap-1">
                       <AlertCircle size={10} />
@@ -726,27 +739,27 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
         )}
 
         {data.status === 'available' ? (
-           <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
-             <ArrowRight size={16} />
+           <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+             <ArrowRight size={14} />
            </div>
         ) : (
           <div className="text-right">
              {data.status === 'overdue' ? (
-               <span className="text-lg font-bold text-gray-900">{data.holder?.time}</span>
+               <span className="text-base font-bold text-gray-900">{data.holder?.time}</span>
              ) : (
-               <span className="text-xs text-gray-400">{data.holder?.time}</span>
+               <span className="text-[11px] text-gray-400">{data.holder?.time}</span>
              )}
           </div>
         )}
       </div>
       
       {/* Status Label Top Right */}
-      <div className="absolute top-5 right-5">
+      <div className="absolute top-4 right-4">
         <span className={cn(
-          "text-xs font-bold",
-          data.status === 'available' && "text-emerald-600",
-          data.status === 'borrowed' && "text-amber-600",
-          data.status === 'overdue' && "text-red-600",
+          "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+          data.status === 'available' && "text-emerald-700 bg-emerald-50 border-emerald-100",
+          data.status === 'borrowed' && "text-amber-700 bg-amber-50 border-amber-100",
+          data.status === 'overdue' && "text-red-700 bg-red-50 border-red-100",
         )}>
           {data.status === 'available' && "Livre"}
           {data.status === 'borrowed' && "Emprestada"}

@@ -4,10 +4,16 @@ import {
   FileText, 
   FileSpreadsheet, 
   Filter, 
-  Key, 
   ChevronLeft,
   ChevronRight,
-  Search
+  Search,
+  User,
+  Shield,
+  Phone,
+  Building,
+  CheckCircle,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { MOCK_KEYS, MOCK_PEOPLE, KeyData } from '../data/mock';
@@ -55,7 +61,6 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
 
       const person = MOCK_PEOPLE.find(p => p.name === user.name);
       const rawRole = (user.role || person?.role || 'Servidor');
-      if (rawRole === 'Visitante') return [];
       const role = rawRole as ReportRole;
       const contact = person?.contact || (('contact' in user ? (user as { contact?: string }).contact : undefined) ?? '—');
       const area = person?.area || (('area' in user ? (user as { area?: string }).area : undefined) ?? undefined);
@@ -155,8 +160,8 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
         {/* Header */}
         <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200">
-              <Key className="text-white w-5 h-5" />
+            <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center shadow-lg shadow-gray-200">
+              <img src="/images/chave.png" alt="Ícone chave" className="w-5 h-5 object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Relatório de Empréstimo de Chaves</h1>
@@ -342,14 +347,14 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  <th className="px-6 py-4">Nome</th>
-                  <th className="px-6 py-4">Perfil</th>
-                  <th className="px-6 py-4">Contato</th>
-                  <th className="px-6 py-4">Area</th>
-                  <th className="px-6 py-4">Chave</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Retirada</th>
-                  <th className="px-6 py-4">Entrega</th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><User size={14} />Nome</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><Shield size={14} />Perfil</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><Phone size={14} />Contato</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><Building size={14} />Area</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><img src="/images/chave.png" alt="Chave" className="w-3.5 h-3.5 object-contain" />Chave</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><CheckCircle size={14} />Status</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><LogOut size={14} />Retirada</div></th>
+                  <th className="px-6 py-4"><div className="flex items-center gap-2"><LogIn size={14} />Entrega</div></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -371,7 +376,7 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-gray-700 font-medium">
-                        <Key size={14} className="text-gray-400" />
+                        <img src="/images/chave.png" alt="Ícone chave" className="w-3.5 h-3.5 object-contain" />
                         {item.keyName}
                       </div>
                     </td>
