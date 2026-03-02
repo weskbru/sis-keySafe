@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   database:
-    image: postgres:15-alpine # Imagem oficial e leve do PostgreSQL
+    image: postgres:15-alpine 
     container_name: sischave_db
     restart: unless-stopped
     environment:
@@ -12,7 +12,7 @@ services:
     ports:
       - "${DB_PORT_LOCAL}:${DB_PORT_CONTAINER}"
     volumes:
-      - db_data:/var/lib/postgresql/data # Caminho oficial de persistência do Postgres
+      - db_data:/var/lib/postgresql/data 
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
@@ -36,7 +36,7 @@ services:
     volumes:
       - ./backend:/app
     ports:
-      - "8080:8000"  # AQUI ESTÁ O SEGREDO: A porta 8080 externa aponta para a 8000 interna
+      - "8080:8000"  # A porta 8080 externa aponta para a 8000 interna
     environment:
       - DB_HOST=database
       - DB_PORT=${DB_PORT_CONTAINER}
