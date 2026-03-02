@@ -660,13 +660,15 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
               </button>
             )}
             
-            <button 
-              onClick={() => setIsEditKeyModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
-            >
-              <Edit2 size={16} />
-              Editar
-            </button>
+            {selectedKey.status === 'available' && (
+              <button 
+                onClick={() => setIsEditKeyModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors"
+              >
+                <Edit2 size={16} />
+                Editar
+              </button>
+            )}
           </div>
         </aside>
       )}
