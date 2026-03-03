@@ -26,7 +26,7 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
           <img src={chaveIcon} alt="Logo Sistema" className="w-8 h-8 object-contain" />
         </div>
         <div>
-          <h2 className="font-bold text-lg leading-tight">AEB Controle de Chaves</h2>
+          <h1 className="font-bold text-lg leading-tight">AEB Chaves</h1>
           <p className="text-xs text-gray-500">Portaria & Segurança</p>
         </div>
       </div>
