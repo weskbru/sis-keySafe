@@ -1,7 +1,7 @@
 """
 Comando: python manage.py create_initial_users
 
-Cria os usuários iniciais do sistema a partir de variáveis de ambiente.
+Cria o usuário administrador do sistema a partir de variáveis de ambiente.
 É idempotente: se o usuário já existir, nenhuma ação é realizada.
 Deve ser executado automaticamente no startup do container (ver docker-compose.yml).
 """
@@ -12,26 +12,16 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = 'Cria os usuários iniciais do sistema se ainda não existirem.'
+    help = 'Cria o usuário administrador se ainda não existir.'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write('Verificando usuários iniciais...')
+        self.stdout.write('Verificando usuário administrador...')
 
         self._criar(
             username=os.environ.get('ADMIN_USERNAME', 'admin'),
             password=os.environ.get('ADMIN_PASSWORD', ''),
             label='Superadmin',
             is_superuser=True,
-        )
-        self._criar(
-            username='bloco_a',
-            password=os.environ.get('BLOCO_A_PASSWORD', ''),
-            label='Operador Bloco A',
-        )
-        self._criar(
-            username='bloco_f',
-            password=os.environ.get('BLOCO_F_PASSWORD', ''),
-            label='Operador Bloco F',
         )
 
         self.stdout.write(self.style.SUCCESS('Verificação concluída.'))

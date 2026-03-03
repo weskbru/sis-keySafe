@@ -20,20 +20,12 @@ class PessoaSerializer(serializers.ModelSerializer):
             'ativo', 'criado_em', 'atualizado_em',
         ]
         read_only_fields = ['criado_em', 'atualizado_em']
-
-    def _usuario_privilegiado(self) -> bool:
-        request = self.context.get('request')
-        if not request or not request.user or not request.user.is_authenticated:
-            return False
-        user = request.user
-        return user.is_staff or user.groups.filter(name='Operadores').exists()
+        extra_kwargs = {'cpf': {'write_only': True}}
 
     def get_cpf_display(self, obj: Pessoa) -> str:
         cpf = obj.cpf  # ex: "123.456.789-00"
-        if self._usuario_privilegiado():
-            return cpf
-        # Mantém apenas os 5 últimos caracteres visíveis: "89-00"
-        return f'***.***.**{cpf[-5:]}'
+        # Exibe os 4 últimos dígitos numéricos: "***.***.*XX-XX"
+        return f'***.***.*{cpf[-5:]}'
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

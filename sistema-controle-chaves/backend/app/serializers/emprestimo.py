@@ -19,15 +19,9 @@ class PessoaResumoSerializer(serializers.ModelSerializer):
     cpf_display = serializers.SerializerMethodField()
 
     def get_cpf_display(self, obj):
-        cpf = obj.cpf
-        request = self.context.get('request')
-        is_privileged = (
-            request and request.user and request.user.is_authenticated
-            and (request.user.is_staff or request.user.groups.filter(name='Operadores').exists())
-        )
-        if is_privileged:
-            return cpf
-        return f'***.***.**{cpf[-5:]}'
+        cpf = obj.cpf  # ex: "123.456.789-00"
+        # Exibe os 4 últimos dígitos numéricos: "***.***.*XX-XX"
+        return f'***.***.*{cpf[-5:]}'
 
     class Meta:
         model = Pessoa

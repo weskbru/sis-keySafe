@@ -4,6 +4,7 @@ import { authService, type LoginCredentials, type CurrentUser } from '../service
 
 interface AuthContextValue {
   isAuthenticated: boolean;
+  isLoading: boolean;
   currentUser: CurrentUser | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
@@ -15,12 +16,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     authService.isAuthenticated()
   );
+  const [isLoading, setIsLoading] = useState(() => authService.isAuthenticated());
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   const logout = useCallback(() => {
     authService.logout();
     setIsAuthenticated(false);
     setCurrentUser(null);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -29,17 +32,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isAuthenticated && !currentUser) {
-      authService.me().then(setCurrentUser).catch(() => logout());
+      authService.me()
+        .then((user) => {
+          setCurrentUser(user);
+          setIsLoading(false);
+        })
+        .catch(() => {
+          logout();
+        });
     }
   }, [isAuthenticated, currentUser, logout]);
 
   async function login(credentials: LoginCredentials): Promise<void> {
     await authService.login(credentials);
     setIsAuthenticated(true);
+    setIsLoading(true);
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, currentUser, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, currentUser, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

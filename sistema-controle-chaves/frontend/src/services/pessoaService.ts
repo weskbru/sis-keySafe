@@ -3,7 +3,6 @@ import api from './api';
 export interface ApiPessoa {
   id: number;
   nome_completo: string;
-  cpf: string;
   cpf_display: string;
   tipo_vinculo: 'SERVIDOR' | 'PRESTADOR';
   setor: number | null;

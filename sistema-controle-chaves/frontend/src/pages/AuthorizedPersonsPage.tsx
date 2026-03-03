@@ -110,7 +110,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
 
     const formData = new FormData();
     formData.append('nome_completo', data.name);
-    formData.append('cpf', data.document);
+    if (!data.id) formData.append('cpf', data.document);
     formData.append('tipo_vinculo', data.role === 'Servidor' ? 'SERVIDOR' : 'PRESTADOR');
     if (data.setorId) formData.append('setor', String(data.setorId));
     formData.append('telefone', data.phone || '');
