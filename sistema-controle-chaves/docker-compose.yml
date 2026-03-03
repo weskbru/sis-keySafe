@@ -48,8 +48,6 @@ services:
       - CORS_ALLOW_ALL=${CORS_ALLOW_ALL}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - BLOCO_A_PASSWORD=${BLOCO_A_PASSWORD}
-      - BLOCO_F_PASSWORD=${BLOCO_F_PASSWORD}
     depends_on:
       database:
         condition: service_healthy

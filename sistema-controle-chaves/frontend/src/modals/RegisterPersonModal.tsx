@@ -89,8 +89,10 @@ export function RegisterPersonModal({
     setShowAreaList(false);
   };
 
+  const isEditing = !!initialData;
+
   const handleSubmit = () => {
-    if (!name.trim() || !document.trim() || !phone.trim()) {
+    if (!name.trim() || (!isEditing && !document.trim()) || !phone.trim()) {
       alert('Preencha todos os campos obrigatórios.');
       return;
     }
@@ -253,13 +255,24 @@ export function RegisterPersonModal({
           {/* Document and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">CPF</label>
+              <label className="text-sm font-medium text-gray-700">
+                CPF
+                {isEditing && (
+                  <span className="ml-2 text-xs text-gray-400 font-normal">(não editável)</span>
+                )}
+              </label>
               <input
                 type="text"
                 placeholder="000.000.000-00"
-                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-gray-400"
+                className={cn(
+                  'w-full px-4 py-3 rounded-lg border outline-none transition-all',
+                  isEditing
+                    ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-gray-400'
+                )}
                 value={document}
-                onChange={(e) => setDocument(formatCpf(e.target.value))}
+                onChange={(e) => !isEditing && setDocument(formatCpf(e.target.value))}
+                disabled={isEditing}
               />
             </div>
             <div className="space-y-2">
