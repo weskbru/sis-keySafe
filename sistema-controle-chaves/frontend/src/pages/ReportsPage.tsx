@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sidebar } from '../modals/Sidebar';
+import chaveIcon from '../images/chave.png';
 
 interface ReportsPageProps {
   onNavigate: (page: 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports') => void;
@@ -32,7 +33,7 @@ export function ReportsPage({ onNavigate, onLogout }: ReportsPageProps) {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <ReportCard 
-                icon={<img src="/images/chave.png" alt="Ícone chave" className="w-6 h-6 object-contain" />}
+                icon={<img src={chaveIcon} alt="Ícone chave" className="w-6 h-6 object-contain" />}
                 title="Relatório de Chaves"
                 description="Histórico de posses, temporalidade e registros de devolução."
                 iconBg="bg-blue-50"

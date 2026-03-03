@@ -2,6 +2,7 @@ import React from 'react';
 import { LayoutDashboard, FileText, LogOut, Users, User, ShieldCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
+import chaveIcon from '../images/chave.png';
 
 type Page = 'dashboard' | 'reports' | 'settings' | 'authorized-persons' | 'key-reports' | 'admin-users';
 
@@ -22,10 +23,10 @@ export function Sidebar({ activePage, onNavigate, onLogout }: SidebarProps) {
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20">
       <div className="p-6 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gray-50 border border-gray-100">
-          <img src="/images/chave.png" alt="Logo Sistema" className="w-8 h-8 object-contain" />
+          <img src={chaveIcon} alt="Logo Sistema" className="w-8 h-8 object-contain" />
         </div>
         <div>
-          <h1 className="font-bold text-lg leading-tight">KeyControl</h1>
+          <h1 className="font-bold text-lg leading-tight">AEB Chaves</h1>
           <p className="text-xs text-gray-500">Portaria & Segurança</p>
         </div>
       </div>

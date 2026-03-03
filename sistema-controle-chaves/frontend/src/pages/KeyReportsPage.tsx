@@ -19,6 +19,7 @@ import {
 import { cn } from '../lib/utils';
 import { fetchHistorico, KeyReportItem } from '../services/relatorioService';
 import { Sidebar } from '../modals/Sidebar';
+import chaveIcon from '../images/chave.png';
 
 interface KeyReportsPageProps {
   onNavigate: (page: any) => void;
@@ -188,7 +189,7 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
         <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center shadow-lg shadow-gray-200">
-              <img src="/images/chave.png" alt="Ícone chave" className="w-5 h-5 object-contain" />
+              <img src={chaveIcon} alt="Ícone chave" className="w-5 h-5 object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">Relatório de Empréstimo de Chaves</h1>
@@ -390,7 +391,7 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                         <th className="px-6 py-4"><div className="flex items-center gap-2"><Building size={14} />Área</div></th>
                         <th className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <img src="/images/chave.png" alt="Chave" className="w-3.5 h-3.5 object-contain" />
+                            <img src={chaveIcon} alt="Chave" className="w-3.5 h-3.5 object-contain" />
                             Chave
                           </div>
                         </th>
@@ -411,7 +412,7 @@ export function KeyReportsPage({ onNavigate, onLogout }: KeyReportsPageProps) {
                           <td className="px-6 py-4 text-sm text-gray-600">{item.area}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2 text-gray-700 font-medium">
-                              <img src="/images/chave.png" alt="Ícone chave" className="w-3.5 h-3.5 object-contain" />
+                              <img src={chaveIcon} alt="Ícone chave" className="w-3.5 h-3.5 object-contain" />
                               {item.keyName}
                             </div>
                           </td>
