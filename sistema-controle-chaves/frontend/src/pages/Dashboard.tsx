@@ -24,6 +24,8 @@ import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { chaveService } from '../services/chaveService';
 import { emprestimoService, toKeyData } from '../services/emprestimoService';
 import { pessoaService, toPessoaData } from '../services/pessoaService';
+import keyIcon from '../images/key-icon_34404.png';
+import chaveIcon from '../images/chave.png';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -430,7 +432,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
           {keys.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-              <img src="/images/chave.png" alt="" className="w-16 h-16 mb-4 opacity-30" />
+              <img src={chaveIcon} alt="" className="w-16 h-16 mb-4 opacity-30" />
               <p className="text-lg font-medium">Nenhuma chave cadastrada</p>
               <p className="text-sm mt-1">Clique em "Cadastrar Nova Chave" para começar.</p>
             </div>
@@ -510,7 +512,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
           <div className="flex-1 overflow-y-auto p-6 space-y-8">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <img src="/images/key-icon_34404.png" alt="Ícone chave" className="w-10 h-10 object-contain" />
+                <img src={keyIcon} alt="Ícone chave" className="w-10 h-10 object-contain" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900">{selectedKey.name}</h2>
@@ -654,7 +656,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
               >
                 <div className="bg-white/20 p-1 rounded">
-                  <img src="/images/key-icon_34404.png" alt="Ícone chave" className="w-4 h-4 object-contain" />
+                  <img src={keyIcon} alt="Ícone chave" className="w-4 h-4 object-contain" />
                 </div>
                 Entregar Chave
               </button>
@@ -776,7 +778,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
                 'bg-red-50 border-red-200 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]'
             )}
           >
-            <img src="/images/key-icon_34404.png" alt="Chave" className="w-16 h-16 object-contain" />
+            <img src={keyIcon} alt="Chave" className="w-16 h-16 object-contain" />
           </div>
           <span
             className={cn(
