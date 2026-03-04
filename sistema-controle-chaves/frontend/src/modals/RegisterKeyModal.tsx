@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
+import chaveIcon from '../images/chave.png';
 
 interface RegisterKeyModalProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <img src="/images/chave.png" alt="Ícone chave" className="w-5 h-5 object-contain" />
+            <img src={chaveIcon} alt="Ícone chave" className="w-5 h-5 object-contain" />
             <h2 className="text-lg font-bold text-gray-900">Cadastrar Nova Chave</h2>
           </div>
           <button 

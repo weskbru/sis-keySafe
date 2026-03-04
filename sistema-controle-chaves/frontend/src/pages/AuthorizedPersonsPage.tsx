@@ -156,7 +156,7 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
       await loadPessoas();
     } catch (err: any) {
       if (err?.response?.status === 409) {
-        showToast('Esta pessoa possui empréstimos ativos e não pode ser removida.', 'warning');
+        showToast('Esta pessoa possui chaves emprestadas. Registre a devolução antes de removê-la.', 'warning');
       } else {
         showToast('Erro ao remover pessoa.');
       }
