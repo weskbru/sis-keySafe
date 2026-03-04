@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Info } from 'lucide-react';
 import { KeyData } from '../data/mock';
 
@@ -16,7 +16,7 @@ export function ReturnKeyModal({ isOpen, onClose, onConfirm, keyData }: ReturnKe
 
   // Default values if data is missing
   const holderName = keyData.holder?.name || 'Desconhecido';
-  const borrowedAt = keyData.borrowedAt || 'Data não registrada';
+  const borrowedAt = keyData.withdrawnAt || 'Data não registrada';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">

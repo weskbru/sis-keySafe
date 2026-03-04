@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShieldCheck, Shield, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { ApiAdminUser, AdminUserPayload } from '../services/adminUserService';
+import { useToast } from '../contexts/ToastContext';
 
 interface AdminUserModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export function AdminUserModal({ isOpen, onClose, onConfirm, initialData }: Admi
   if (!isOpen) return null;
 
   const isEdit = !!initialData;
+  const { showToast } = useToast();
 
   const [username, setUsername] = useState(initialData?.username || '');
   const [firstName, setFirstName] = useState(initialData?.first_name || '');
@@ -30,11 +32,11 @@ export function AdminUserModal({ isOpen, onClose, onConfirm, initialData }: Admi
 
   const handleSubmit = () => {
     if (!username.trim() || !email.trim()) {
-      alert('Preencha usuário e e-mail.');
+      showToast('Preencha usuário e e-mail.', 'warning');
       return;
     }
     if (!isEdit && !password.trim()) {
-      alert('A senha é obrigatória ao criar um administrador.');
+      showToast('A senha é obrigatória ao criar um administrador.', 'warning');
       return;
     }
 

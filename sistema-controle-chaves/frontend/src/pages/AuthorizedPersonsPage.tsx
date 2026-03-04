@@ -16,6 +16,7 @@ import { RegisterPersonModal } from '../modals/RegisterPersonModal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { pessoaService, toPessoaData } from '../services/pessoaService';
 import { setorService, ApiSetor } from '../services/setorService';
+import { useToast } from '../contexts/ToastContext';
 
 interface AuthorizedPersonsPageProps {
   onNavigate: (
@@ -25,6 +26,7 @@ interface AuthorizedPersonsPageProps {
 }
 
 export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPersonsPageProps) {
+  const { showToast } = useToast();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [people, setPeople] = useState<PersonData[]>([]);
@@ -129,11 +131,11 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
     } catch (err: any) {
       const errData = err?.response?.data;
       if (errData?.cpf) {
-        alert('CPF já cadastrado no sistema.');
+        showToast('CPF já cadastrado no sistema.');
       } else if (errData && typeof errData === 'object') {
-        alert(Object.values(errData).flat().join('\n'));
+        showToast(Object.values(errData).flat().join(' '));
       } else {
-        alert('Erro ao salvar pessoa.');
+        showToast('Erro ao salvar pessoa.');
       }
     }
   };
@@ -154,9 +156,9 @@ export function AuthorizedPersonsPage({ onNavigate, onLogout }: AuthorizedPerson
       await loadPessoas();
     } catch (err: any) {
       if (err?.response?.status === 409) {
-        alert('Esta pessoa possui empréstimos ativos e não pode ser removida.');
+        showToast('Esta pessoa possui empréstimos ativos e não pode ser removida.', 'warning');
       } else {
-        alert('Erro ao remover pessoa.');
+        showToast('Erro ao remover pessoa.');
       }
     }
   };

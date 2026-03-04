@@ -13,7 +13,6 @@ export interface KeyData {
     name: string;
     role: string;
     avatar: string;
-    time?: string;
     cpf?: string;
   };
   lastUser?: {
@@ -28,6 +27,10 @@ export interface KeyData {
   allowedProfiles?: string[];
   observations?: string;
   borrowedAt?: string;
+  /** Data efetiva de retirada da chave */
+  withdrawnAt?: string;
+  /** Nome do último usuário que devolveu a chave — exibido apenas no card */
+  lastUserName?: string;
   /** ID do empréstimo ativo — preenchido pela API quando status !== 'available' */
   emprestimoId?: string;
 }
@@ -59,7 +62,6 @@ export const MOCK_KEYS: KeyData[] = [
       name: 'Ricardo M.',
       role: 'Servidor',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=faces',
-      time: 'Há 2h',
       area: undefined,
       contact: undefined
     },
@@ -78,7 +80,6 @@ export const MOCK_KEYS: KeyData[] = [
       name: 'Ana Clara',
       role: 'Servidor',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=faces',
-      time: '45m',
       area: undefined,
       contact: undefined
     },

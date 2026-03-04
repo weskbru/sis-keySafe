@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 
 interface RegisterKeyModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface RegisterKeyModalProps {
 export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModalProps) {
   if (!isOpen) return null;
 
+  const { showToast } = useToast();
   const [keyName, setKeyName] = useState('');
   const [location, setLocation] = useState('Bloco A');
   const [allowedProfiles, setAllowedProfiles] = useState<string[]>([]);
@@ -25,7 +27,7 @@ export function RegisterKeyModal({ isOpen, onClose, onConfirm }: RegisterKeyModa
 
   const handleSubmit = () => {
     if (!keyName.trim() || !location.trim() || allowedProfiles.length === 0) {
-      alert('Preencha todos os campos obrigatorios.');
+      showToast('Preencha todos os campos obrigatórios.', 'warning');
       return;
     }
     onConfirm({

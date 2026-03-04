@@ -3,6 +3,7 @@ import { X, GraduationCap, UserCog, CheckCircle2, Camera, User } from 'lucide-re
 import { cn } from '../lib/utils';
 import { PersonData } from '../data/mock';
 import type { ApiSetor } from '../services/setorService';
+import { useToast } from '../contexts/ToastContext';
 
 interface RegisterPersonModalProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ export function RegisterPersonModal({
   setores,
 }: RegisterPersonModalProps) {
   if (!isOpen) return null;
+
+  const { showToast } = useToast();
 
   const [name, setName] = useState(initialData?.name || '');
   const [role, setRole] = useState<Role>(initialData?.role || 'Servidor');
@@ -64,11 +67,11 @@ export function RegisterPersonModal({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione apenas arquivos de imagem.');
+      showToast('Por favor, selecione apenas arquivos de imagem.', 'warning');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem deve ter no máximo 5MB.');
+      showToast('A imagem deve ter no máximo 5MB.', 'warning');
       return;
     }
     setAvatarFile(file);
@@ -93,7 +96,7 @@ export function RegisterPersonModal({
 
   const handleSubmit = () => {
     if (!name.trim() || (!isEditing && !document.trim()) || !phone.trim()) {
-      alert('Preencha todos os campos obrigatórios.');
+      showToast('Preencha todos os campos obrigatórios.', 'warning');
       return;
     }
     onConfirm({

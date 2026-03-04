@@ -15,6 +15,7 @@ import { AdminUserModal } from '../modals/AdminUserModal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { Sidebar } from '../modals/Sidebar';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface AdminUsersPageProps {
   onNavigate: (page: any) => void;
@@ -23,6 +24,7 @@ interface AdminUsersPageProps {
 
 export function AdminUsersPage({ onNavigate, onLogout }: AdminUsersPageProps) {
   const { currentUser } = useAuth();
+  const { showToast } = useToast();
 
   const [users, setUsers] = useState<ApiAdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export function AdminUsersPage({ onNavigate, onLogout }: AdminUsersPageProps) {
       const msg = err?.response?.data
         ? Object.values(err.response.data).flat().join(' ')
         : 'Erro ao salvar. Tente novamente.';
-      alert(msg);
+      showToast(msg);
     }
   };
 
@@ -72,7 +74,7 @@ export function AdminUsersPage({ onNavigate, onLogout }: AdminUsersPageProps) {
       await adminUserService.update(user.id, { is_active: !user.is_active });
       await loadUsers();
     } catch {
-      alert('Erro ao alterar status. Tente novamente.');
+      showToast('Erro ao alterar status. Tente novamente.');
     }
   };
 
@@ -82,7 +84,7 @@ export function AdminUsersPage({ onNavigate, onLogout }: AdminUsersPageProps) {
       await adminUserService.destroy(deleteTarget.id);
       await loadUsers();
     } catch {
-      alert('Erro ao excluir. Tente novamente.');
+      showToast('Erro ao excluir. Tente novamente.');
     }
   };
 

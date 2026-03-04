@@ -40,18 +40,30 @@ export const emprestimoService = {
   ) => api.patch(`/api/emprestimos/${id}/devolver/`, data ?? {}),
 };
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMins = Math.floor((now.getTime() - date.getTime()) / 60000);
-  if (diffMins < 60) return `${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `Há ${diffHours}h`;
-  return `${Math.floor(diffHours / 24)}d`;
+function formatDateBR(dateStr: string | null): string | undefined {
+  if (!dateStr) return undefined;
+  const normalized = /[Zz]|[+-]\d{2}:\d{2}$/.test(dateStr) ? dateStr : dateStr + 'Z';
+  const date = new Date(normalized);
+  if (isNaN(date.getTime())) return undefined;
+  // Converte UTC → America/Sao_Paulo (UTC-3, sem horário de verão desde 2019)
+  const sp = new Date(date.getTime() - 3 * 60 * 60 * 1000);
+  return sp.toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'UTC',
+  });
 }
 
-export function toKeyData(chave: ApiChave, emprestimosAtivos: ApiEmprestimo[]) {
+export function toKeyData(
+  chave: ApiChave,
+  emprestimosAtivos: ApiEmprestimo[],
+  todosEmprestimos: ApiEmprestimo[] = emprestimosAtivos
+) {
   const emp = emprestimosAtivos.find((e) => e.chave.id === chave.id);
+
+  const lastLoan = todosEmprestimos
+    .filter((e) => e.chave.id === chave.id && e.data_devolucao)
+    .sort((a, b) => new Date(b.data_devolucao!).getTime() - new Date(a.data_devolucao!).getTime())[0];
 
   const status: 'available' | 'borrowed' | 'overdue' =
     chave.status_calculado === 'VENCIDO'
@@ -79,12 +91,14 @@ export function toKeyData(chave: ApiChave, emprestimosAtivos: ApiEmprestimo[]) {
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(
             emp.pessoa.nome_completo
           )}&background=4f46e5&color=ffffff&size=80`,
-          time: formatRelativeTime(emp.data_retirada),
           contact: undefined,
           area: emp.pessoa.setor_nome || undefined,
           cpf: emp.pessoa.cpf_display,
         }
       : undefined,
+    lastUserName: lastLoan ? lastLoan.pessoa.nome_completo : undefined,
+    withdrawnAt: emp ? formatDateBR(emp.data_retirada) : undefined,
+    borrowedAt: emp ? formatDateBR(emp.data_prevista_devolucao) : undefined,
     emprestimoId: emp ? String(emp.id) : undefined,
   };
 }

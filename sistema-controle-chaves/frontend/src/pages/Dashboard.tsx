@@ -24,6 +24,7 @@ import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { chaveService } from '../services/chaveService';
 import { emprestimoService, toKeyData } from '../services/emprestimoService';
 import { pessoaService, toPessoaData } from '../services/pessoaService';
+import { useToast } from '../contexts/ToastContext';
 
 interface DashboardProps {
   onLogout: () => void;
@@ -33,6 +34,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
+  const { showToast } = useToast();
   const [selectedKeyId, setSelectedKeyId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProfile, setFilterProfile] = useState<string>('all');
@@ -61,7 +63,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         pessoaService.list(),
       ]);
       const empAtivos = emprestimosRes.data.filter((e) => !e.data_devolucao);
-      setKeys(chavesRes.data.map((c) => toKeyData(c, empAtivos)));
+      setKeys(chavesRes.data.map((c) => toKeyData(c, empAtivos, emprestimosRes.data)));
       setPessoas(pessoasRes.data.map(toPessoaData));
     } catch (err) {
       console.error('Erro ao carregar dashboard:', err);
@@ -146,7 +148,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         err?.response?.data && typeof err.response.data === 'object'
           ? Object.values(err.response.data).flat().join(' ')
           : 'Erro ao registrar devolução.';
-      alert(msg);
+      showToast(msg);
     }
   };
 
@@ -158,7 +160,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
     if (!selectedKey || !confirmationModal.data) return;
     const data = confirmationModal.data;
     if (!data.personId) {
-      alert('Selecione uma pessoa cadastrada no sistema.');
+      showToast('Selecione uma pessoa cadastrada no sistema.', 'warning');
       return;
     }
     try {
@@ -178,7 +180,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         err?.response?.data && typeof err.response.data === 'object'
           ? Object.values(err.response.data).flat().join(' ')
           : 'Erro ao conceder chave.';
-      alert(msg);
+      showToast(msg);
     }
   };
 
@@ -204,7 +206,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
         err?.response?.data && typeof err.response.data === 'object'
           ? Object.values(err.response.data).flat().join(' ')
           : 'Erro ao cadastrar chave.';
-      alert(msg);
+      showToast(msg);
     }
   };
 
@@ -228,8 +230,8 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
       });
       setIsEditKeyModalOpen(false);
       await loadDashboardData();
-    } catch (err: any) {
-      alert('Erro ao editar chave.');
+    } catch {
+      showToast('Erro ao editar chave.');
     }
   };
 
@@ -246,9 +248,9 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
       await loadDashboardData();
     } catch (err: any) {
       if (err?.response?.status === 409) {
-        alert('Esta chave possui empréstimos e não pode ser removida.');
+        showToast('Esta chave possui empréstimos e não pode ser removida.', 'warning');
       } else {
-        alert('Erro ao excluir chave.');
+        showToast('Erro ao excluir chave.');
       }
     }
   };
@@ -789,7 +791,7 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
         </div>
 
         <div className="mb-1 text-center">
-          <h3 className="font-bold text-gray-900 text-sm leading-tight">{data.name} -</h3>
+          <h3 className="font-bold text-gray-900 text-sm leading-tight">{data.name}</h3>
         </div>
         <h3 className="font-bold text-gray-900 text-sm leading-tight mb-2 text-center">
           {data.location}
@@ -798,9 +800,22 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
 
       <div className="pt-3 border-t border-gray-100 flex items-center justify-between mt-auto">
         {data.status === 'available' ? (
-          <div className="text-[11px] text-gray-400 italic leading-tight">
-            <p>Último uso:</p>
-            <p>{data.lastUsed || '—'}</p>
+          <div className="flex items-center gap-2">
+            {data.lastUserName ? (
+              <img
+                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(data.lastUserName)}&background=4f46e5&color=ffffff&size=80`}
+                alt={data.lastUserName}
+                className="w-6 h-6 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0" />
+            )}
+            <div className="text-[11px] text-gray-400 italic leading-tight">
+              <p>Último uso:</p>
+              <p className="text-gray-600 not-italic font-medium truncate max-w-30">
+                {data.lastUserName || '—'}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -827,17 +842,9 @@ const KeyCard: React.FC<KeyCardProps> = ({ data, isSelected, onClick }) => {
           </div>
         )}
 
-        {data.status === 'available' ? (
+        {data.status === 'available' && (
           <div className="w-7 h-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-gray-100 group-hover:text-gray-600 transition-colors">
             <ArrowRight size={14} />
-          </div>
-        ) : (
-          <div className="text-right">
-            {data.status === 'overdue' ? (
-              <span className="text-base font-bold text-gray-900">{data.holder?.time}</span>
-            ) : (
-              <span className="text-[11px] text-gray-400">{data.holder?.time}</span>
-            )}
           </div>
         )}
       </div>
