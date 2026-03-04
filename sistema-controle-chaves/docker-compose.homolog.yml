@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: sischave_db_homolog
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    # Porta NÃO exposta externamente — acesso apenas pela rede interna
+    volumes:
+      - db_data_homolog:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sischave_network
+
+  backend:
+    # Pipeline define BACKEND_IMAGE=registry.../backend e IMAGE_TAG=<sha>
+    # Localmente, se não definidos, usa nome de imagem local como fallback
+    image: ${BACKEND_IMAGE:-sischave_backend_homolog}:${IMAGE_TAG:-latest}
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sischave_backend_homolog
+    restart: always
+    command: >
+      sh -c "python manage.py migrate --fake-initial &&
+             python manage.py collectstatic --noinput &&
+             python manage.py create_initial_users &&
+             gunicorn app.main:application --bind 0.0.0.0:8000 --workers 2 --timeout 60 --access-logfile -"
+    volumes:
+      - media_data:/app/media
+    # Porta NÃO exposta externamente — nginx faz o proxy
+    environment:
+      - DB_HOST=database
+      - DB_PORT=${DB_PORT_CONTAINER:-5432}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET_KEY=${SECRET_KEY}
+      - DJANGO_DEBUG=False
+      - CORS_ALLOW_ALL=False
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_ACCESS_MINUTES=${JWT_ACCESS_MINUTES:-60}
+      - JWT_REFRESH_DAYS=${JWT_REFRESH_DAYS:-7}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - sischave_network
+
+  frontend:
+    # Imagem já buildada com VITE_API_URL="" (URLs relativas) pelo pipeline
+    image: ${FRONTEND_IMAGE:-sischave_frontend_homolog}:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.homolog
+      args:
+        # URL vazia = URLs relativas → nginx faz o proxy para o backend
+        - VITE_API_URL=${VITE_API_URL:-}
+    container_name: sischave_frontend_homolog
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sischave_network
+
+networks:
+  sischave_network:
+    driver: bridge
+
+volumes:
+  db_data_homolog:
+  media_data:
