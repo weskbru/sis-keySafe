@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: sischave_db_dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "${DB_PORT_LOCAL}:${DB_PORT_CONTAINER}"
+    volumes:
+      - db_data_dev:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sischave_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sischave_backend_dev
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate --fake-initial &&
+             python manage.py create_initial_users &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8080:8000"
+    environment:
+      - DB_HOST=database
+      - DB_PORT=${DB_PORT_CONTAINER}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET_KEY=${SECRET_KEY}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
+      - CORS_ALLOW_ALL=${CORS_ALLOW_ALL}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - sischave_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sischave_frontend_dev
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - sischave_network
+
+networks:
+  sischave_network:
+    driver: bridge
+
+volumes:
+  db_data_dev:
