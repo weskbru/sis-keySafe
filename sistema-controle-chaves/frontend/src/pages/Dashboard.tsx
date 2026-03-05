@@ -500,7 +500,12 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
 
       {/* Right Panel (Details) */}
       {selectedKey && (
-        <aside className="w-96 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 shadow-xl z-30">
+        <>
+          <div
+            className="fixed inset-0 z-20"
+            onClick={() => setSelectedKeyId(null)}
+          />
+          <aside className="w-96 bg-white border-l border-gray-200 flex flex-col flex-shrink-0 shadow-xl z-30 relative">
           <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100 flex-shrink-0">
             <h3 className="font-bold text-lg">Detalhes da Chave</h3>
             <button
@@ -684,6 +689,7 @@ export function Dashboard({ onLogout, onNavigate }: DashboardProps) {
             )}
           </div>
         </aside>
+        </>
       )}
 
       {selectedKey && (
