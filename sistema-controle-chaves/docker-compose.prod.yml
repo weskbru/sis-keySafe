@@ -3,16 +3,15 @@ version: '3.8'
 services:
   database:
     image: postgres:15-alpine
-    container_name: sischave_db_dev
-    restart: unless-stopped
+    container_name: sischave_db_prod
+    restart: always
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
-    ports:
-      - "${DB_PORT_LOCAL}:${DB_PORT_CONTAINER}"
+    # Porta NÃO exposta externamente — acesso apenas pela rede interna
     volumes:
-      - db_data_dev:/var/lib/postgresql/data
+      - db_data_prod:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
@@ -27,28 +26,31 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: sischave_backend_dev
-    restart: unless-stopped
+    container_name: sischave_backend_prod
+    restart: always
     command: >
       sh -c "python manage.py migrate --fake-initial &&
+             python manage.py collectstatic --noinput &&
              python manage.py create_initial_users &&
-             python manage.py runserver 0.0.0.0:8000"
+             gunicorn app.main:application --bind 0.0.0.0:8000 --workers 4 --timeout 60 --access-logfile -"
     volumes:
-      - ./backend:/app
-    ports:
-      - "8080:8000"
+      - media_data:/app/media
+    # Porta NÃO exposta externamente — nginx faz o proxy
     environment:
       - DB_HOST=database
-      - DB_PORT=${DB_PORT_CONTAINER}
+      - DB_PORT=${DB_PORT_CONTAINER:-5432}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - JWT_SECRET_KEY=${SECRET_KEY}
-      - DJANGO_DEBUG=${DJANGO_DEBUG}
-      - CORS_ALLOW_ALL=${CORS_ALLOW_ALL}
+      - DJANGO_DEBUG=False
+      - CORS_ALLOW_ALL=False
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - ADMIN_USERNAME=${ADMIN_USERNAME}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_ACCESS_MINUTES=${JWT_ACCESS_MINUTES:-60}
+      - JWT_REFRESH_DAYS=${JWT_REFRESH_DAYS:-7}
     depends_on:
       database:
         condition: service_healthy
@@ -58,16 +60,14 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
-    container_name: sischave_frontend_dev
-    restart: unless-stopped
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      dockerfile: Dockerfile.homolog
+      args:
+        # VITE_API_URL vazio = URLs relativas (/api/...) — nginx faz o proxy
+        - VITE_API_URL=
+    container_name: sischave_frontend_prod
+    restart: always
     ports:
-      - "3000:3000"
-    environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - "80:80"
     depends_on:
       - backend
     networks:
@@ -78,4 +78,5 @@ networks:
     driver: bridge
 
 volumes:
-  db_data_dev:
+  db_data_prod:
+  media_data:

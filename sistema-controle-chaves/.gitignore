@@ -1,3 +1,7 @@
+# Docker Compose — ambientes específicos (não vão para o repositório)
+docker-compose.dev.yml
+docker-compose.prod.yml
+
 # Ambientes e Segredos
 .env
 .env.*
